@@ -127,7 +127,7 @@ const App = () => {
       <main>
         <section ref={homeRef} className="section">
           <div className="section-content">
-            <h1>Video Editor & Color Grader</h1>
+            <h1 className="homeTitle">Video Editor & Color Grader</h1>
             <img
               src="/Koral/BLACK.png"
               alt="Koral Dayan"
@@ -327,7 +327,7 @@ const App = () => {
           max-width: 100%;
           overflow-x: hidden;
           box-sizing: border-box;
-          padding-top: 64px; /* Add padding to account for fixed navbar */
+          padding-top: 24px; /* Add padding to account for fixed navbar */
         }
 
         /* Home section keeps original padding */
@@ -346,7 +346,6 @@ const App = () => {
 
         .projects-section {
           height: calc(100vh - 64px);
-          margin-top: 64px;
           width: 100vw;
           display: flex;
           flex-direction: column;
@@ -354,7 +353,7 @@ const App = () => {
         }
         
         .projects-header {
-          padding: 20px 40px 20px 40px; /* Reduced top padding */
+          padding: 0px 40px 20px 40px; /* Reduced top padding */
           text-align: left;
           width: 100%;
         }
@@ -392,7 +391,10 @@ const App = () => {
           padding: 0;
           margin-bottom: 20px; /* Added margin below headings */
         }
-        
+        .homeTitle{
+        padding-top:48px;
+        }
+
         .project-item {
           cursor: pointer;
           position: relative;
