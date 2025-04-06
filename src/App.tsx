@@ -1,113 +1,53 @@
-import React, { useRef, useState } from 'react';
-// import Logo from '/Koral/BLACK.png';
-const App = () => {
-  const [activeSection, setActiveSection] = useState('home');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [currentProject, setCurrentProject] = useState<{
-    id: number;
-    title: string;
-    secondaryTitle: string;
-    videoUrl: string;
-    type: string;
-    thumbnail?: string;
-  } | null>(null);
-  // Object mapping project id to thumbnail image URL
+import React, { useRef, useState, useEffect } from "react";
+import projects from "./projects.json";
 
+interface Project {
+  id: number;
+  title: string;
+  secondaryTitle: string;
+  videoUrl: string;
+  type: string;
+  thumbnail?: string;
+}
+
+interface ProjectsData {
+  data: Project[];
+}
+
+const App = () => {
+  const [activeSection, setActiveSection] = useState("home");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentProject, setCurrentProject] = useState<Project | null>(null);
+  
   const homeRef = useRef<HTMLDivElement>(null);
   const projectsRef = useRef<HTMLDivElement>(null);
   const aboutRef = useRef<HTMLDivElement>(null);
   const contactRef = useRef<HTMLDivElement>(null);
-
-  const projects = [
-    {
-      id: 1,
-      title: "Project 1",
-      secondaryTitle: "PSYCHO PATH",
-      videoUrl:
-        "https://drive.google.com/file/d/1wrIPFZCeCS64R647xf2tPEC4eHF83xjB/preview",
-      type: "colorGrading",
-      // Uncomment or add a thumbnail property here if available.
-      // thumbnail: 'https://example.com/path-to-thumbnail.jpg'
-    },
-    {
-      id: 2,
-      title: "Project 2",
-      secondaryTitle: "On My Dead Body",
-      videoUrl:
-        "https://drive.google.com/file/d/1NcEoYFfhHTpNUUUO7anT6zi84fXGShfc/preview",
-      type: "colorGrading",
-    },
-    {
-      id: 3,
-      title: "Project 3",
-      secondaryTitle: "BZAAT",
-      videoUrl: "https://drive.google.com/file/d/1ksWIn-aj2DYZNO59FwEGSgPv12VDv7uu/preview",
-      type: "both",
-    },
-    {
-      id: 4,
-      title: "Project 4",
-      secondaryTitle: "Dj Nati",
-      videoUrl: "https://drive.google.com/file/d/1kGtaVMiIGgWIhqvZ_c7t9JfT2jdxXhQw/preview",
-      type: "both",
-    },
-    {
-      id: 5,
-      title: "Project 5",
-      secondaryTitle: "Shava Beshava",
-      videoUrl: "https://drive.google.com/file/d/1eykoue_888_KYpgovIGnZXq3faUH2GKK/preview",
-      type: "videoEditing",
-    },
-    {
-      id: 6,
-      title: "Project 6",
-      secondaryTitle: "MA MERE",
-      videoUrl: "https://drive.google.com/file/d/17xch-nYc7jcwhkODy8Kxan4JFgdEpqsU/view?usp=sharing",
-      type: "videoEditing",
-    },
-    {
-      id: 7,
-      title: "Project 7",
-      secondaryTitle: "Techonoso Tel Heshomer",
-      videoUrl: "https://drive.google.com/file/d/1HBKAYfLh6KWaHNmqPVGS4yJdE_ykduuQ/preview",
-      type: "both",
-    },
-    {
-      id: 8,
-      title: "Project 8",
-      secondaryTitle: "Or Koplis MasterClass",
-      videoUrl: "https://drive.google.com/file/d/1gD5-AKKwM9X6rRnlQ_DYwi2U9kwIx5Kh/preview",
-      type: "videoEditing",
-      thumbnail: "https://via.placeholder.com/300x200?text=No+Thumbnail",
-    },
-    {
-      id:9,
-      title: "Project 9",
-      secondaryTitle: "Tempto",
-      videoUrl: "https://drive.google.com/file/d/1lYaqLrncerMDMoIT2-O-cAWFjMKA4xGn/view?usp=sharing",
-      type: "videoEditing",
-
-    }
-  ];
+  const projectsGridRef = useRef<HTMLDivElement>(null);
 
   const scrollToSection = (
     ref: React.MutableRefObject<HTMLDivElement | null>,
     section: React.SetStateAction<string>
   ) => {
     if (ref.current) {
-      ref.current.scrollIntoView({ behavior: 'smooth' });
+      // Add offset to account for the navbar height
+      const navbarHeight = 64;
+      const yOffset = -navbarHeight;
+      const y = ref.current.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      
+      window.scrollTo({ top: y, behavior: "smooth" });
       setActiveSection(section);
     }
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     const handleScroll = () => {
-      const scrollPosition = window.scrollY + window.innerHeight / 2;
+      const scrollPosition = window.scrollY + 80; // Adjusted to account for navbar
       const sections = [
-        { ref: homeRef, id: 'home' },
-        { ref: projectsRef, id: 'projects' },
-        { ref: aboutRef, id: 'about' },
-        { ref: contactRef, id: 'contact' },
+        { ref: homeRef, id: "home" },
+        { ref: projectsRef, id: "projects" },
+        { ref: aboutRef, id: "about" },
+        { ref: contactRef, id: "contact" },
       ];
 
       for (const section of sections) {
@@ -116,7 +56,10 @@ const App = () => {
           const offsetTop = element.offsetTop;
           const height = element.offsetHeight;
 
-          if (scrollPosition >= offsetTop && scrollPosition < offsetTop + height) {
+          if (
+            scrollPosition >= offsetTop &&
+            scrollPosition < offsetTop + height
+          ) {
             setActiveSection(section.id);
             break;
           }
@@ -124,24 +67,11 @@ const App = () => {
       }
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Generates a thumbnail image from a video URL by capturing a frame.
-  // Note: The video source must support CORS; otherwise, this will fail.
-
-  // On mount, generate thumbnails for projects that don't have a thumbnail property.
-
-
-  const openModal = (project: {
-    id: number;
-    title: string;
-    secondaryTitle: string;
-    videoUrl: string;
-    type: string;
-    thumbnail?: string;
-  }) => {
+  const openModal = (project: Project) => {
     setCurrentProject(project);
     setIsModalOpen(true);
   };
@@ -153,19 +83,16 @@ const App = () => {
 
   return (
     <>
-
       <nav className="navbar">
-
         <div className="nav-content">
           <div className="logo">
-                      <img
-            style={{zIndex:9999, position: "absolute",top:15}}
-            src="/Koral/WHITE.png"
-            alt="Koral Dayan"
-            className="logo"
-            width={100}
-            // height={50}
-          />
+            <img
+              style={{ zIndex: 9999, position: "absolute", top: 15 }}
+              src="/Koral/WHITE.png"
+              alt="Koral Dayan"
+              className="logo"
+              width={100}
+            />
           </div>
 
           <div className="nav-links">
@@ -202,13 +129,11 @@ const App = () => {
           <div className="section-content">
             <h1>Video Editor & Color Grader</h1>
             <img
-            // style={{ position: "absolute", top: "25px" }}
-            src="/Koral/BLACK.png"
-            alt="Koral Dayan"
-            // className="logo"
-            width={100}
-            height={100}
-          />
+              src="/Koral/BLACK.png"
+              alt="Koral Dayan"
+              width={100}
+              height={100}
+            />
 
             <p className="subtitle">
               Transforming visions into cinematic reality
@@ -217,50 +142,56 @@ const App = () => {
         </section>
 
         <section ref={projectsRef} className="section gray-bg projects-section">
-          <div className="section-content">
+          <div className="projects-header">
             <h2>Projects</h2>
+          </div>
+          <div className="projects-scroll-container" ref={projectsGridRef}>
             <div className="projects-grid">
-              {projects.map((project) => (
+              {projects.data.map((project) => (
                 <div
                   key={project.id}
                   className="project-item"
                   onClick={() => openModal(project)}
                 >
-                  {/* Render the thumbnail image */}
-                  {project.thumbnail && (
-                    <img
-                      src={project.thumbnail}
-                      alt={project.title}
-                      style={{
-                        width: "100%",
-                        height: "auto",
-                        marginBottom: "8px",
-                      }}
-                    />
+                  {project.title && (
+                  <img
+                    src={`/Thumbnails/${project.title}.png`}
+                    onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.onerror = null;
+                    target.src = `/Thumbnails/${project.title}.jpg`;
+                    }}
+                    alt={project.title}
+                    className="project-thumbnail"
+                  />
                   )}
-                  <div className="project-title">{project.title}</div>
-                  <div className="secondary-title">
+                  <div className="project-overlay">
+                  <div className="project-info">
+                    <div className="project-title">{project.title}</div>
+                    <div className="secondary-title">
                     {project.secondaryTitle}
-                  </div>
-                  <div className="project-type">
+                    </div>
+                    <div className="project-type">
                     {project.type === "both" ? (
                       <>
-                        <div className="type-bar colorGrading" />
-                        <span>Color Grading</span>
-                        <div className="type-bar videoEditing" />
-                        <span>Video Editing</span>
+                      <div className="type-bar colorGrading" />
+                      <span>Color Grading</span>
+                      <div className="type-bar videoEditing" />
+                      <span>Video Editing</span>
                       </>
                     ) : project.type === "colorGrading" ? (
                       <>
-                        <div className="type-bar colorGrading" />
-                        <span>Color Grading</span>
+                      <div className="type-bar colorGrading" />
+                      <span>Color Grading</span>
                       </>
                     ) : (
                       <>
-                        <div className="type-bar videoEditing" />
-                        <span>Video Editing</span>
+                      <div className="type-bar videoEditing" />
+                      <span>Video Editing</span>
                       </>
                     )}
+                    </div>
+                  </div>
                   </div>
                 </div>
               ))}
@@ -273,11 +204,18 @@ const App = () => {
             <h2>About</h2>
             <div className="about-text">
               <p>
-                Professional video editor and color grader with expertise in
-                creating compelling visual narratives.
-              </p>
-              <p>
-                Specializing in feature films, commercials, and music videos.
+                I'm Koral Dayan Cohen, a passionate video editor, director,
+                colorist, and producer. I specialize in crafting compelling
+                stories from concept to completion, balancing both creative
+                vision and technical excellence. With meticulous attention to
+                detail and a deep commitment to narrative, I bring each frame to
+                life, turning raw footage into powerful, engaging content. My
+                experience spans diverse projects—including documentaries,
+                narrative films, and beyond. I firmly believe in the emotional
+                power of video storytelling, and I'm dedicated to creating
+                content that resonates deeply with audiences. For me, every
+                frame counts, and every project receives the full heart and
+                passion it deserves.
               </p>
             </div>
           </div>
@@ -308,9 +246,6 @@ const App = () => {
       {isModalOpen && currentProject && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
-            {/* <button className="close-modal" onClick={closeModal}>
-          X
-        </button> */}
             <h3>{currentProject.title}</h3>
             <iframe
               src={currentProject.videoUrl}
@@ -335,6 +270,8 @@ const App = () => {
           background-color: black;
           color: white;
           font-family: 'Jost', sans-serif;
+          width: 100%;
+          overflow-x: hidden;
         }
         .navbar {
           position: fixed;
@@ -345,6 +282,7 @@ const App = () => {
           backdrop-filter: blur(8px);
           border-bottom: 1px solid rgba(255, 255, 255, 0.1);
           z-index: 1000;
+          height: 64px;
         }
         .nav-content {
           max-width: 1400px;
@@ -384,68 +322,138 @@ const App = () => {
           min-height: 100vh;
           width: 100vw;
           display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .section-content {
-          max-width: 1400px;
-          width: 90%;
-          margin: 0 auto;
-          padding: 20px;
-        }
-        .projects-section {
-          min-height: unset;
-          height: 100vh;
-          padding: 64px 0;
-          display: flex;
-          align-items: center;
+          flex-direction: column;
+          align-items: flex-start;
+          max-width: 100%;
+          overflow-x: hidden;
           box-sizing: border-box;
-          width: 100%;
+          padding-top: 64px; /* Add padding to account for fixed navbar */
         }
+
+        /* Home section keeps original padding */
+        section:first-of-type .section-content {
+          padding-top: 40px;
+        }
+
+        /* Other sections get less top padding */
         .section-content {
           width: 100%;
-          margin: 0;
-          padding: 0 32px;
+          max-width: 100%;
+          padding: 20px 40px 40px 40px;
+          overflow-y: auto;
+          max-height: 100vh;
         }
+
+        .projects-section {
+          height: 100vh;
+          padding: 64px 0 0 0;
+          width: 100vw;
+          display: flex;
+          flex-direction: column;
+        }
+        
+        .projects-header {
+          padding: 20px 40px 20px 40px; /* Reduced top padding */
+          text-align: left;
+          width: 100%;
+        }
+        
+        .projects-scroll-container {
+          flex: 1;
+          overflow-y: auto;
+          padding: 0 40px 40px 40px;
+          width: 100%;
+          max-height: 700px;
+          scrollbar-width: thin;
+        }
+        
+        .projects-scroll-container::-webkit-scrollbar {
+          width: 6px;
+        }
+        
+        .projects-scroll-container::-webkit-scrollbar-track {
+          background: #222;
+        }
+        
+        .projects-scroll-container::-webkit-scrollbar-thumb {
+          background-color: #444;
+          border-radius: 6px;
+        }
+
         .projects-grid {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
-          gap: 16px;
+          gap: 24px;
           width: 100%;
-          margin-top: 20px;
-          margin-bottom: 20px;
         }
+        
         h2 {
-          padding: 0 32px;
+          padding: 0;
+          margin-bottom: 20px; /* Added margin below headings */
         }
+        
         .project-item {
-          background-color: rgba(255, 255, 255, 0.1);
-          padding: 16px;
           cursor: pointer;
-          transition: transform 0.3s ease, background-color 0.3s ease;
-          text-align: center;
+          position: relative;
+          height: 220px;
+          width: 100%;
+          overflow: hidden;
+          background-color: #000;
+          border-radius: 4px;
+          transition: transform 0.3s ease;
+          margin-bottom: 0;
+        }
+        .project-item:hover {
+          transform: scale(1.02);
+        }
+        .project-thumbnail {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+        }
+        .project-overlay {
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          background-color: rgba(0, 0, 0, 0.7);
+          overflow: hidden;
+          width: 100%;
+          height: 0;
+          transition: height 0.5s ease;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .project-item:hover .project-overlay {
+          height: 100%;
+        }
+        .project-info {
+          width: 100%;
+          height: 100%;
           display: flex;
           flex-direction: column;
           justify-content: center;
           align-items: center;
-          gap: 8px;
+          text-align: center;
+          padding: 20px;
           position: relative;
-          height: 170px;
-          width: 100%;
+          transform: translateY(50px);
+          transition: transform 0.5s ease;
         }
-        .project-item:hover {
-          transform: scale(1.02);
-          background-color: rgba(255, 255, 255, 0.15);
+        .project-item:hover .project-info {
+          transform: translateY(0);
         }
         .project-title {
           font-size: 18px;
           font-weight: bold;
-          margin-bottom: 4px;
+          margin-bottom: 8px;
         }
         .secondary-title {
           font-size: 14px;
           color: #cccccc;
-          margin-bottom: 8px;
+          margin-bottom: 16px;
         }
         .project-type {
           font-size: 12px;
@@ -454,8 +462,8 @@ const App = () => {
           align-items: center;
           gap: 6px;
           position: absolute;
-          bottom: 8px;
-          left: 8px;
+          bottom: 10px;
+          left: 10px;
         }
         .type-bar {
           width: 6px;
@@ -466,7 +474,7 @@ const App = () => {
             grid-template-columns: repeat(2, 1fr);
           }
           .project-item {
-            height: 140px;
+            height: 200px;
           }
         }
         @media (max-width: 768px) {
@@ -474,17 +482,18 @@ const App = () => {
             grid-template-columns: repeat(1, 1fr);
           }
           .project-item {
-            height: 120px;
+            height: 180px;
           }
           .projects-section {
             height: auto;
-            padding: 80px 0;
+          }
+          .projects-header,
+          .projects-scroll-container {
+            padding-left: 16px;
+            padding-right: 16px;
           }
           .section-content {
-            padding: 0 16px;
-          }
-          h2 {
-            padding: 0 16px;
+            padding: 20px 16px;
           }
         }
         .colorGrading {
@@ -509,27 +518,21 @@ const App = () => {
           background-color: black;
           padding: 40px;
           border-radius: 12px;
-          max-width: 900px;
-          width: 100%;
+          max-width: 95%;
+          width: 1200px;
           display: flex;
           flex-direction: column;
           gap: 20px;
           text-align: center;
         }
-        .close-modal {
-          position: absolute;
-          top: 20px;
-          right: 20px;
-          background: none;
-          border: none;
-          color: white;
-          font-size: 28px;
-          cursor: pointer;
-        }
         video {
           width: 100%;
           height: auto;
           border-radius: 8px;
+        }
+        iframe {
+          width: 100%;
+          height: 600px;
         }
         .contact-form {
           max-width: 500px;
@@ -561,6 +564,9 @@ const App = () => {
         }
         .contact-form button:hover {
           background-color: #cccccc;
+        }
+        .gray-bg {
+          background-color: #111;
         }
       `}</style>
     </>
