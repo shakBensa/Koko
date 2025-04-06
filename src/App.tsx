@@ -10,9 +10,9 @@ interface Project {
   thumbnail?: string;
 }
 
-interface ProjectsData {
-  data: Project[];
-}
+// interface ProjectsData {
+//   data: Project[];
+// }
 
 const App = () => {
   const [activeSection, setActiveSection] = useState("home");
