@@ -10,9 +10,9 @@ interface Project {
   thumbnail?: string;
 }
 
-// interface ProjectsData {
-//   data: Project[];
-// }
+interface ProjectsData {
+  data: Project[];
+}
 
 const App = () => {
   const [activeSection, setActiveSection] = useState("home");
@@ -345,11 +345,12 @@ const App = () => {
         }
 
         .projects-section {
-          height: 100vh;
-          padding: 64px 0 0 0;
+          height: calc(100vh - 64px);
+          margin-top: 64px;
           width: 100vw;
           display: flex;
           flex-direction: column;
+          overflow: hidden;
         }
         
         .projects-header {
@@ -363,7 +364,7 @@ const App = () => {
           overflow-y: auto;
           padding: 0 40px 40px 40px;
           width: 100%;
-          max-height: 700px;
+          max-height: calc(100vh - 160px); /* Account for navbar and header */
           scrollbar-width: thin;
         }
         
