@@ -281,24 +281,30 @@ const App = () => {
   const openModal = (project: Project) => {
     setCurrentProject(project);
     setIsModalOpen(true);
-    document.body.style.overflow = 'hidden';
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
     setCurrentProject(null);
-    document.body.style.overflow = 'auto';
   };
 
+  // Close modal or mobile menu on ESC
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isModalOpen) {
-        closeModal();
+      if (e.key === 'Escape') {
+        if (isModalOpen) closeModal();
+        if (isMenuOpen) setIsMenuOpen(false);
       }
     };
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
-  }, [isModalOpen]);
+  }, [isModalOpen, isMenuOpen]);
+
+  // Lock body scroll when modal or menu is open
+  useEffect(() => {
+    document.body.style.overflow = (isModalOpen || isMenuOpen) ? 'hidden' : 'auto';
+    return () => { document.body.style.overflow = 'auto'; };
+  }, [isModalOpen, isMenuOpen]);
 
   const handleFormSubmit = () => {
     const subject = encodeURIComponent('New Project Inquiry');
@@ -336,12 +342,12 @@ const App = () => {
 
   return (
     <>
-      <nav className="navbar">
+      <nav className="navbar" role="navigation" aria-label="Primary">
         <div className="nav-content">
           <div className="logo-container">
             <div className="logo">
               <img
-                style={{ zIndex: 9999, position: "absolute", bottom: 15 }}
+                style={{ position: "absolute", bottom: 15 }}
                 src="/Koral/WHITE.png"
                 alt="Koral Dayan"
                 className="logo"
@@ -352,13 +358,16 @@ const App = () => {
 
           <button
             className="mobile-menu-toggle"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            aria-label="Toggle menu"
+            onClick={() => setIsMenuOpen((o) => !o)}
+            aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={isMenuOpen}
+            aria-controls="primary-navigation"
           >
             <span className={`hamburger ${isMenuOpen ? "open" : ""}`}></span>
+            <span className="sr-only">{isMenuOpen ? 'Close' : 'Open'} navigation</span>
           </button>
 
-          <div className={`nav-links ${isMenuOpen ? "mobile-open" : ""}`}>
+          <div id="primary-navigation" className={`nav-links ${isMenuOpen ? "mobile-open" : ""}`}>
             <button
               onClick={() => scrollToSection(homeRef, "home")}
               className={activeSection === "home" ? "active" : ""}
@@ -386,6 +395,15 @@ const App = () => {
           </div>
         </div>
       </nav>
+
+      {/* Scrim for mobile menu */}
+      {isMenuOpen && (
+        <div
+          className="mobile-scrim"
+          aria-hidden
+          onClick={() => setIsMenuOpen(false)}
+        />
+      )}
 
       <main>
         <section ref={homeRef} className="section hero-section">
@@ -454,7 +472,7 @@ const App = () => {
                         src={`/Thumbnails/${project.title}.png`}
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
-                          target.onerror = null;
+                          (target as any).onerror = null;
                           target.src = `/Thumbnails/${project.title}.jpg`;
                         }}
                         alt={project.title}
@@ -675,6 +693,8 @@ const App = () => {
           --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
+        .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+
         body {
           margin: 0;
           background-color: var(--dark-bg);
@@ -718,7 +738,7 @@ const App = () => {
         }
 
         /* Navbar */
-        .navbar {
+    .navbar {
           position: fixed;
           top: 0;
           left: 0;
@@ -727,11 +747,11 @@ const App = () => {
           backdrop-filter: blur(20px);
           -webkit-backdrop-filter: blur(20px);
           border-bottom: 1px solid var(--border-color);
-          z-index: 1000;
+          z-index: 1002;
           height: 80px;
           transition: var(--transition);
         }
-
+        
         .nav-content {
           max-width: 1400px;
           margin: 0 auto;
@@ -795,7 +815,7 @@ const App = () => {
           cursor: pointer;
           padding: 10px;
           position: relative;
-          z-index: 1001;
+          z-index: 1002;
         }
 
         .hamburger {
@@ -1474,9 +1494,9 @@ textarea.form-input {
 }
 
 @media (max-width: 768px) {
-  .reel-card { width: 70vw; min-width: 70vw; }
+  .mobile-menu-toggle { display: block; }
 
-  /* (this is your mobile nav block that accidentally lost its wrapper) */
+  /* slide-in panel for mobile nav */
   .nav-links {
     position: fixed;
     top: 80px;
@@ -1489,9 +1509,18 @@ textarea.form-input {
     gap: 30px;
     transition: right 0.3s ease;
     border-top: 1px solid var(--border-color);
+    z-index: 1001; /* above scrim */
   }
   .nav-links.mobile-open { right: 0; }
   .nav-links button { font-size: 20px; width: 100%; text-align: left; }
+
+  /* dark scrim under the slide-in panel */
+  .mobile-scrim {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000; /* under the panel, over the page */
+  }
 
   .section-header { flex-direction: column; align-items: flex-start; }
   .filter-buttons { width: 100%; overflow-x: auto; padding-bottom: 10px; }
