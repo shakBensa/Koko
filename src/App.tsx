@@ -1326,10 +1326,12 @@ const App = () => {
 /* outer container matches page width and centers nicely */
 .reels-container {
   position: relative;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 40px;
+  width: 100%;
+  max-width: none;   /* remove the 1400px cap */
+  margin: 0;         /* no extra centering margin */
+  padding: 0;        /* use .section-content's 80px side padding */
 }
+
 
 /* FLEX track; force LTR so first card starts at the left */
 .reels-track {
