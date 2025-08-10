@@ -97,7 +97,6 @@ const toEmbedUrl = (url: string) => {
   }
 };
 
-/** קרוסלה לרילסים */
 const ReelsCarousel = ({
   items,
   onOpen
@@ -106,6 +105,11 @@ const ReelsCarousel = ({
   onOpen: (p: Project) => void;
 }) => {
   const trackRef = useRef<HTMLDivElement>(null);
+
+  // make sure we always start at the first card
+  useEffect(() => {
+    if (trackRef.current) trackRef.current.scrollLeft = 0;
+  }, [items.length]);
 
   const scrollBy = (dir: number) => {
     const el = trackRef.current;
@@ -116,9 +120,11 @@ const ReelsCarousel = ({
   };
 
   return (
-    <div className="reels-wrapper">
+    <div className="reels-container">
       <button className="reel-arrow left" aria-label="previous reels" onClick={() => scrollBy(-1)}>‹</button>
-      <div className="reels-track" ref={trackRef}>
+
+      {/* Force LTR so first card is at the left edge even if the page has RTL content */}
+      <div className="reels-track" ref={trackRef} dir="ltr">
         {items.map((p) => (
           <div key={p.id} className="reel-card" onClick={() => onOpen(p)}>
             <div className="reel-video">
@@ -130,17 +136,19 @@ const ReelsCarousel = ({
                 allowFullScreen
               />
             </div>
-            <div className="reel-meta">
+            <div className="reel-meta" dir="rtl">
               <h4>{p.title}</h4>
               <p>{p.secondaryTitle}</p>
             </div>
           </div>
         ))}
       </div>
+
       <button className="reel-arrow right" aria-label="next reels" onClick={() => scrollBy(1)}>›</button>
     </div>
   );
 };
+
 
 const App = () => {
   const [activeSection, setActiveSection] = useState("home");
@@ -250,8 +258,8 @@ const App = () => {
       activeFilter === "all"
         ? true
         : activeFilter === "colorGrading"
-        ? p.type === "colorGrading" || p.type === "both"
-        : p.type === "videoEditing" || p.type === "both"
+          ? p.type === "colorGrading" || p.type === "both"
+          : p.type === "videoEditing" || p.type === "both"
     )
     .filter(p => (p.format ?? "standard") !== "reel")
     .sort((a, b) => orderIndex(a.title, ORDER) - orderIndex(b.title, ORDER));
@@ -1332,6 +1340,99 @@ const App = () => {
         .reel-arrow:hover { background: rgba(255,255,255,0.1); }
         .reel-arrow.left { left: 10px; }
         .reel-arrow.right { right: 10px; }
+        /* CONTAINER aligns with your page max width like the header */
+.reels-container {
+  position: relative;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 40px; /* same side padding as the header */
+}
+
+/* FLEX instead of grid; prevents right-shift bugs in some browsers */
+.reels-track {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  padding: 6px 0 12px;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+  scrollbar-color: #444 #222;
+  /* important: make sure it starts at the left edge */
+  direction: ltr;
+}
+
+.reels-track::-webkit-scrollbar { height: 8px; }
+.reels-track::-webkit-scrollbar-track { background: #222; border-radius: 4px; }
+.reels-track::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
+.reels-track::-webkit-scrollbar-thumb:hover { background: #555; }
+
+/* Explicit width so arrows know how far to scroll */
+.reel-card {
+  min-width: 260px;   /* base width */
+  max-width: 320px;
+  width: 280px;       /* consistent card width */
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  scroll-snap-align: start;
+  cursor: pointer;
+  transition: var(--transition);
+  overflow: hidden;
+}
+
+.reel-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(255,255,255,0.2);
+  box-shadow: var(--shadow);
+}
+
+/* 9:16 embed */
+.reel-video {
+  position: relative;
+  width: 100%;
+  padding-bottom: 177.78%; /* 9:16 */
+  background: #000;
+}
+.reel-video iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.reel-meta {
+  padding: 12px 14px 16px;
+}
+.reel-meta h4 { font-size: 16px; margin-bottom: 6px; }
+.reel-meta p  { color: var(--text-secondary); font-size: 14px; }
+
+.reel-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background: rgba(255,255,255,0.04);
+  color: var(--text-primary);
+  display: grid; place-items: center;
+  cursor: pointer;
+  transition: var(--transition);
+  z-index: 2;
+}
+.reel-arrow:hover { background: rgba(255,255,255,0.1); }
+.reel-arrow.left  { left: 6px; }
+.reel-arrow.right { right: 6px; }
+
+/* Responsive: wider cards on tablets; narrower on phones */
+@media (max-width: 1024px) {
+  .reels-container { padding: 0 20px; }
+  .reel-card { width: 260px; }
+}
+@media (max-width: 768px) {
+  .reel-card { width: 70vw; }
+}
+
 
         /* Responsive Design */
         @media (max-width: 1024px) {
