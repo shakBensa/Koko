@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useLayoutEffect } from "react";
 
 interface Project {
   id: number;
@@ -105,10 +105,19 @@ const ReelsCarousel = ({
   onOpen: (p: Project) => void;
 }) => {
   const trackRef = useRef<HTMLDivElement>(null);
+  const [snapReady, setSnapReady] = useState(false);
 
-  // make sure we always start at the first card
-  useEffect(() => {
-    if (trackRef.current) trackRef.current.scrollLeft = 0;
+  // Always start at the first card (fixes initial right-shift)
+  useLayoutEffect(() => {
+    const el = trackRef.current;
+    if (!el) return;
+    setSnapReady(false);                 // temporarily disable snap
+    // Wait for layout, then reset scrollLeft
+    requestAnimationFrame(() => {
+      el.scrollLeft = 0;
+      // enable snap after we placed the scroll position
+      requestAnimationFrame(() => setSnapReady(true));
+    });
   }, [items.length]);
 
   const scrollBy = (dir: number) => {
@@ -123,8 +132,12 @@ const ReelsCarousel = ({
     <div className="reels-container">
       <button className="reel-arrow left" aria-label="previous reels" onClick={() => scrollBy(-1)}>‹</button>
 
-      {/* Force LTR so first card is at the left edge even if the page has RTL content */}
-      <div className="reels-track" ref={trackRef} dir="ltr">
+      {/* Force LTR so "start" is the left edge even on RTL pages */}
+      <div
+        className={`reels-track ${snapReady ? "" : "no-snap"}`}
+        ref={trackRef}
+        dir="ltr"
+      >
         {items.map((p) => (
           <div key={p.id} className="reel-card" onClick={() => onOpen(p)}>
             <div className="reel-video">
@@ -136,6 +149,7 @@ const ReelsCarousel = ({
                 allowFullScreen
               />
             </div>
+            {/* keep text RTL so Hebrew looks right */}
             <div className="reel-meta" dir="rtl">
               <h4>{p.title}</h4>
               <p>{p.secondaryTitle}</p>
@@ -148,6 +162,7 @@ const ReelsCarousel = ({
     </div>
   );
 };
+
 
 
 const App = () => {
@@ -1262,93 +1277,18 @@ const App = () => {
           width: 100%; height: 100%;
         }
 
-        /* ---------- Reels ---------- */
-        .reels-section { background: var(--dark-bg); }
+/* ---------- Reels (clean, FLEX) ---------- */
+.reels-section { background: var(--dark-bg); }
 
-        .reels-wrapper {
-          position: relative;
-          width: 100%;
-          padding: 0 60px; /* מקום לחצים */
-        }
-
-        .reels-track {
-          display: grid;
-          grid-auto-flow: column;
-          grid-auto-columns: minmax(240px, 280px);
-          gap: 16px;
-          overflow-x: auto;
-          scroll-snap-type: x mandatory;
-          padding-bottom: 12px;
-          scrollbar-width: thin;
-          scrollbar-color: #444 #222;
-        }
-
-        .reels-track::-webkit-scrollbar { height: 8px; }
-        .reels-track::-webkit-scrollbar-track { background: #222; border-radius: 4px; }
-        .reels-track::-webkit-scrollbar-thumb { background-color: #444; border-radius: 4px; }
-        .reels-track::-webkit-scrollbar-thumb:hover { background-color: #555; }
-
-        .reel-card {
-          background: rgba(255,255,255,0.03);
-          border: 1px solid var(--border-color);
-          border-radius: 16px;
-          scroll-snap-align: start;
-          cursor: pointer;
-          transition: var(--transition);
-          overflow: hidden;
-        }
-
-        .reel-card:hover {
-          transform: translateY(-6px);
-          border-color: rgba(255,255,255,0.2);
-          box-shadow: var(--shadow);
-        }
-
-        .reel-video {
-          position: relative;
-          width: 100%;
-          /* 9:16 ratio → 16/9 = 1.7778 → 177.78% */
-          padding-bottom: 177.78%;
-          background: #000;
-        }
-
-        .reel-video iframe {
-          position: absolute;
-          inset: 0;
-          width: 100%;
-          height: 100%;
-        }
-
-        .reel-meta { padding: 12px 14px 16px; }
-        .reel-meta h4 { font-size: 16px; margin-bottom: 6px; }
-        .reel-meta p { color: var(--text-secondary); font-size: 14px; }
-
-        .reel-arrow {
-          position: absolute;
-          top: 50%;
-          transform: translateY(-50%);
-          width: 44px; height: 44px;
-          border-radius: 50%;
-          border: 1px solid var(--border-color);
-          background: rgba(255,255,255,0.04);
-          color: var(--text-primary);
-          display: grid; place-items: center;
-          cursor: pointer;
-          transition: var(--transition);
-          z-index: 2;
-        }
-        .reel-arrow:hover { background: rgba(255,255,255,0.1); }
-        .reel-arrow.left { left: 10px; }
-        .reel-arrow.right { right: 10px; }
-        /* CONTAINER aligns with your page max width like the header */
+/* outer container matches page width and centers nicely */
 .reels-container {
   position: relative;
   max-width: 1400px;
   margin: 0 auto;
-  padding: 0 40px; /* same side padding as the header */
+  padding: 0 40px;
 }
 
-/* FLEX instead of grid; prevents right-shift bugs in some browsers */
+/* FLEX track; force LTR so first card starts at the left */
 .reels-track {
   display: flex;
   gap: 16px;
@@ -1357,20 +1297,20 @@ const App = () => {
   scroll-snap-type: x proximity;
   scrollbar-width: thin;
   scrollbar-color: #444 #222;
-  /* important: make sure it starts at the left edge */
   direction: ltr;
+  overscroll-behavior-inline: contain;
+  scroll-padding-left: 0;
 }
+.reels-track.no-snap { scroll-snap-type: none !important; }
 
 .reels-track::-webkit-scrollbar { height: 8px; }
 .reels-track::-webkit-scrollbar-track { background: #222; border-radius: 4px; }
 .reels-track::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
 .reels-track::-webkit-scrollbar-thumb:hover { background: #555; }
 
-/* Explicit width so arrows know how far to scroll */
 .reel-card {
-  min-width: 260px;   /* base width */
-  max-width: 320px;
-  width: 280px;       /* consistent card width */
+  width: 280px;
+  min-width: 280px;
   background: rgba(255,255,255,0.03);
   border: 1px solid var(--border-color);
   border-radius: 16px;
@@ -1379,18 +1319,17 @@ const App = () => {
   transition: var(--transition);
   overflow: hidden;
 }
-
 .reel-card:hover {
   transform: translateY(-6px);
   border-color: rgba(255,255,255,0.2);
   box-shadow: var(--shadow);
 }
 
-/* 9:16 embed */
+/* 9:16 video */
 .reel-video {
   position: relative;
   width: 100%;
-  padding-bottom: 177.78%; /* 9:16 */
+  padding-bottom: 177.78%;
   background: #000;
 }
 .reel-video iframe {
@@ -1400,9 +1339,7 @@ const App = () => {
   height: 100%;
 }
 
-.reel-meta {
-  padding: 12px 14px 16px;
-}
+.reel-meta { padding: 12px 14px 16px; }
 .reel-meta h4 { font-size: 16px; margin-bottom: 6px; }
 .reel-meta p  { color: var(--text-secondary); font-size: 14px; }
 
@@ -1424,68 +1361,44 @@ const App = () => {
 .reel-arrow.left  { left: 6px; }
 .reel-arrow.right { right: 6px; }
 
-/* Responsive: wider cards on tablets; narrower on phones */
+/* ---------- Responsive ---------- */
 @media (max-width: 1024px) {
   .reels-container { padding: 0 20px; }
-  .reel-card { width: 260px; }
+  .reel-card { width: 260px; min-width: 260px; }
 }
+
 @media (max-width: 768px) {
-  .reel-card { width: 70vw; }
+  .reel-card { width: 70vw; min-width: 70vw; }
+
+  /* (this is your mobile nav block that accidentally lost its wrapper) */
+  .nav-links {
+    position: fixed;
+    top: 80px;
+    right: -100%;
+    width: 100%;
+    height: calc(100vh - 80px);
+    background: var(--dark-bg);
+    flex-direction: column;
+    padding: 40px;
+    gap: 30px;
+    transition: right 0.3s ease;
+    border-top: 1px solid var(--border-color);
+  }
+  .nav-links.mobile-open { right: 0; }
+  .nav-links button { font-size: 20px; width: 100%; text-align: left; }
+
+  .section-header { flex-direction: column; align-items: flex-start; }
+  .filter-buttons { width: 100%; overflow-x: auto; padding-bottom: 10px; }
+  .section-content { padding: 80px 20px 40px; }
+  .projects-section { height: auto; min-height: 100vh; }
+  .section-header { padding: 80px 20px 20px; }
+  .projects-scroll-container { padding: 0 20px 20px; max-height: none; overflow-y: visible; }
+  .projects-grid { grid-template-columns: 1fr; gap: 20px; }
+  .hero-title { font-size: clamp(2.5rem, 6vw, 4rem); }
+  .skills-list { grid-template-columns: 1fr; }
+  .modal { padding: 30px 20px; }
+  .about-stats { grid-template-columns: 1fr; }
 }
-
-
-        /* Responsive Design */
-        @media (max-width: 1024px) {
-          .about-grid { grid-template-columns: 1fr; gap: 40px; }
-          .projects-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
-        }
-
-        @media (max-width: 768px) {
-          .mobile-menu-toggle { display: block; }
-
-          .nav-links {
-            position: fixed;
-            top: 80px;
-            right: -100%;
-            width: 100%;
-            height: calc(100vh - 80px);
-            background: var(--dark-bg);
-            flex-direction: column;
-            padding: 40px;
-            gap: 30px;
-            transition: right 0.3s ease;
-            border-top: 1px solid var(--border-color);
-          }
-
-          .nav-links.mobile-open { right: 0; }
-
-          .nav-links button { font-size: 20px; width: 100%; text-align: left; }
-
-          .section-header { flex-direction: column; align-items: flex-start; }
-
-          .filter-buttons { width: 100%; overflow-x: auto; padding-bottom: 10px; }
-
-          .section-content { padding: 80px 20px 40px; }
-
-          .projects-section { height: auto; min-height: 100vh; }
-
-          .section-header { padding: 80px 20px 20px; }
-
-          .projects-scroll-container { padding: 0 20px 20px; max-height: none; overflow-y: visible; }
-
-          .projects-grid { grid-template-columns: 1fr; gap: 20px; }
-
-          .hero-title { font-size: clamp(2.5rem, 6vw, 4rem); }
-
-          .skills-list { grid-template-columns: 1fr; }
-
-          .modal { padding: 30px 20px; }
-
-          .about-stats { grid-template-columns: 1fr; }
-
-          .reels-wrapper { padding: 0 36px; }
-          .reels-track { grid-auto-columns: 70vw; }
-        }
 
         @media (max-width: 480px) {
           .nav-content { padding: 0 20px; }
