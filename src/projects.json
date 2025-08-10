@@ -1,131 +1,28 @@
- {"data":  [
-    {
-      "id": 1,
-      "title": "BOROT",
-      "secondaryTitle": "Video Clips",
-      "videoUrl":
-        "https://drive.google.com/file/d/1kjGDacmR7vvjUDZCXb_qhslLnzt9zsXb/preview",
-      "type": "both"
-    },
-    {
-      "id": 2,
-      "title": "MA MERA",
-      "secondaryTitle": "Documentary",
-      "videoUrl":
-        "https://drive.google.com/file/d/17xch-nYc7jcwhkODy8Kxan4JFgdEpqsU/preview",
-      "type": "colorGrading"
-    },
-    {
-      "id": 3,
-      "title": "BZAAT",
-      "secondaryTitle": "BZAAT",
-      "videoUrl":
-        "https://drive.google.com/file/d/1ksWIn-aj2DYZNO59FwEGSgPv12VDv7uu/preview",
-      "type": "both"
-    },
-    {
-      "id": 4,
-      "title": "DJ Nati",
-      "secondaryTitle": "Dj Nati",
-      "videoUrl":
-        "https://drive.google.com/file/d/1kGtaVMiIGgWIhqvZ_c7t9JfT2jdxXhQw/preview",
-      "type": "both"
-    },
-    {
-      "id": 5,
-      "title": "העבודות של יונתן",
-      "secondaryTitle": "Commercials",
-      "videoUrl":
-        "https://drive.google.com/file/d/1VCb9GiebjMe0rm_1sZXSyPclcpee94-X/preview",
-      "type": "colorGrading"
-    },
-    {
-      "id": 6,
-      "title": "מורעאק",
-      "secondaryTitle": "Commercials",
-      "videoUrl":
-        "https://drive.google.com/file/d/1oh5BtnnrQ_qxAnM31h3DxNa7rv9gtyNk/preview",
-      "type": "both"
-    },
-    {
-      "id": 7,
-      "title": "Techonoso Tel Heshomer",
-      "secondaryTitle": "Techonoso Tel Heshomer",
-      "videoUrl":
-        "https://drive.google.com/file/d/1HBKAYfLh6KWaHNmqPVGS4yJdE_ykduuQ/preview",
-      "type": "both"
-    },
-    {
-      "id": 8,
-      "title": "Or Koplis MasterClass",
-      "secondaryTitle": "Or Koplis MasterClass",
-      "videoUrl":
-        "https://drive.google.com/file/d/1gD5-AKKwM9X6rRnlQ_DYwi2U9kwIx5Kh/preview",
-      "type": "videoEditing"
-    },
-    {
-      "id": 9,
-      "title": "Temptu",
-      "secondaryTitle": "Commercials",
-      "videoUrl":
-        "https://drive.google.com/file/d/1lYaqLrncerMDMoIT2-O-cAWFjMKA4xGn/view?usp=sharing",
-      "type": "videoEditing"
-    },
-    {
-        "id": 10,
-        "title": "Temptu 2",
-        "videoUrl":
-          "https://drive.google.com/file/d/1lYaqLrncerMDMoIT2-O-cAWFjMKA4xGn/view?usp=sharing",
-        "type": "videoEditing",
-        "secondaryTitle": "Temptu 2"
-      },
+{
+  "data": [
+    { "id": 1, "title": "כנס גוגל", "secondaryTitle": "תדמית – עריכה", "videoUrl": "https://youtu.be/cN46fDB6sEo", "type": "videoEditing", "format": "standard", "category": "promo" },
+    { "id": 2, "title": "עבודותיו של יונתן", "secondaryTitle": "גיוס המונים", "videoUrl": "https://youtu.be/4xeq6il7wwQ", "type": "videoEditing", "format": "standard", "category": "promo" },
+    { "id": 3, "title": "לא נעים", "secondaryTitle": "סדרת רשת – זוכה מקום ראשון בפסטיבל קולנוע דרום – עריכה", "videoUrl": "https://youtu.be/NMM1hBqNZoQ", "type": "videoEditing", "format": "standard", "category": "series" },
 
-    {
-      "id": 11,
-      "title": "שווה בשווה",
-      "videoUrl":
-      "https://drive.google.com/file/d/1eykoue_888_KYpgovIGnZXq3faUH2GKK/preview",
-      "type": "videoEditing",
-      "secondaryTitle": "Commercials"
-    },
-    {
-        "id": 12,
-        "title": "ZIMI GANG",
-        "videoUrl":
-          "https://drive.google.com/file/d/1lYaqLrncerMDMoIT2-O-cAWFjMKA4xGn/view?usp=sharing",
-        "type": "videoEditing",
-        "secondaryTitle": "Video Clips"
-      },
-    {
-      "id": 13,
-      "title": "לא נעים",
-      "videoUrl":
-        "https://drive.google.com/file/d/1lYaqLrncerMDMoIT2-O-cAWFjMKA4xGn/view?usp=sharing",
-      "type": "videoEditing",
-      "secondaryTitle": "TV Series"
-    },
-    {
-      "id": 14,
-      "title": "קולקטיב בשוק הכרמל",
-      "videoUrl":
-        "https://drive.google.com/file/d/1lYaqLrncerMDMoIT2-O-cAWFjMKA4xGn/view?usp=sharing",
-      "type": "videoEditing",
-      "secondaryTitle": "smtn"
-    },
-    {
-      "id": 15,
-      "title": "קולקטיב דבש",
-      "videoUrl":
-        "https://drive.google.com/file/d/1lYaqLrncerMDMoIT2-O-cAWFjMKA4xGn/view?usp=sharing",
-      "type": "videoEditing",
-      "secondaryTitle": "Collective Carmel Market"
-    },
-    {
-      "id": 16,
-      "title": "אדון מאיר זה אתה",
-      "videoUrl":
-        "https://drive.google.com/file/d/1lYaqLrncerMDMoIT2-O-cAWFjMKA4xGn/view?usp=sharing",
-      "type": "videoEditing",
-      "secondaryTitle": "???"
-    }
-  ]}
+    { "id": 4, "title": "סטודיו NMC", "secondaryTitle": "פרסומת – עריכה", "videoUrl": "https://youtu.be/IAcx9_tzD1s", "type": "videoEditing", "format": "standard", "category": "promo" },
+    { "id": 5, "title": "take a morning nap", "secondaryTitle": "פרסומת – מפיקה, ע. במאי", "videoUrl": "https://youtu.be/xlum2OR6OR4", "type": "videoEditing", "format": "standard", "category": "promo" },
+    { "id": 6, "title": "מאסטר קלאס אור קופליס", "secondaryTitle": "תדמית – הפקה, עריכה", "videoUrl": "https://youtu.be/4gwemBsQoWE", "type": "videoEditing", "format": "standard", "category": "promo" },
+
+    { "id": 7, "title": "שווה בשווה", "secondaryTitle": "דוקומנטרי קצר – זוכה מקום שני בדוקאביב – עריכה", "videoUrl": "https://youtu.be/iELVQdmfbkk", "type": "videoEditing", "format": "standard", "category": "doc" },
+    { "id": 8, "title": "אדון מאייר, זה אתה?", "secondaryTitle": "סרט עלילתי קצר – פרויקט גמר הוקרן בפסטיבל קולנוע דרום – הפקה, עריכה, צבע", "videoUrl": "https://youtu.be/rFOU5fDv1ig", "type": "both", "format": "standard", "category": "film" },
+    { "id": 9, "title": "טכנוסו באים לתל השומר", "secondaryTitle": "סרטון תדמית – בימוי, הפקה, עריכה", "videoUrl": "https://youtu.be/zUGuJVuz3DI", "type": "both", "format": "standard", "category": "promo" },
+
+    { "id": 10, "title": "דיג׳יי נתי תמם", "secondaryTitle": "דוקו מוזיקלי קצר – עריכה", "videoUrl": "https://youtu.be/GjFlc_2o3K8", "type": "videoEditing", "format": "standard", "category": "doc" },
+    { "id": 11, "title": "בזעת", "secondaryTitle": "דוקו מוזיקלי קצר – בימוי, הפקה, עריכה", "videoUrl": "https://youtu.be/7Nj7ZmVhdz8", "type": "both", "format": "standard", "category": "doc" },
+    { "id": 12, "title": "מורעאק", "secondaryTitle": "סרטון תדמית – הפקה, בימוי, עריכה", "videoUrl": "https://youtu.be/mgH17SVxB5I", "type": "both", "format": "standard", "category": "promo" },
+
+    { "id": 13, "title": "טמפטו 1", "secondaryTitle": "סרטון תדמית – בימוי, הפקה, עריכה", "videoUrl": "https://youtu.be/Hn-SqiSubh8", "type": "both", "format": "standard", "category": "promo" },
+    { "id": 14, "title": "טמפטו 2", "secondaryTitle": "סרטון תדמית – בימוי, הפקה ועריכה", "videoUrl": "https://youtu.be/C-c1JUwge7g", "type": "both", "format": "standard", "category": "promo" },
+    { "id": 15, "title": "בורות", "secondaryTitle": "קליפ – הפקה, בימוי, עריכה", "videoUrl": "https://youtu.be/ijYpmwzrcLQ", "type": "both", "format": "standard", "category": "music" },
+
+    { "id": 16, "title": "קולקטיב פרק 1", "secondaryTitle": "סושיאל / ריל – עריכה", "videoUrl": "https://youtube.com/shorts/0m2Sxtm2NFM", "type": "videoEditing", "format": "reel", "category": "social" },
+    { "id": 17, "title": "קולקטיב פרק 2", "secondaryTitle": "סושיאל / ריל – עריכה", "videoUrl": "https://youtu.be/y0HyeTxYcf0", "type": "videoEditing", "format": "reel", "category": "social" },
+    { "id": 18, "title": "מרכז שלטון אזורי ישראל", "secondaryTitle": "סושיאל / ריל", "videoUrl": "https://youtube.com/shorts/ObevelG63G0", "type": "videoEditing", "format": "reel", "category": "social" },
+    { "id": 19, "title": "סיכום חתונה", "secondaryTitle": "סושיאל / ריל", "videoUrl": "https://youtube.com/shorts/kvSCRHC6T6Y", "type": "videoEditing", "format": "reel", "category": "social" }
+  ]
+}

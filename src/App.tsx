@@ -5,7 +5,9 @@ interface Project {
   title: string;
   secondaryTitle: string;
   videoUrl: string;
-  type: string;
+  type: "colorGrading" | "videoEditing" | "both";
+  format?: "standard" | "reel";
+  category?: string;
   thumbnail?: string;
 }
 
@@ -52,26 +54,107 @@ const AnimatedTitle = ({ children }: { children: string }) => {
   );
 };
 
+/** ----------------------------------------------------------
+ * ORDER: סדר תצוגה מדויק לפי שביקשת
+ * ---------------------------------------------------------- */
+const ORDER = [
+  "כנס גוגל", "עבודותיו של יונתן", "לא נעים",
+  "סטודיו NMC", "take a morning nap", "מאסטר קלאס אור קופליס",
+  "שווה בשווה", "אדון מאייר, זה אתה?", "טכנוסו באים לתל השומר",
+  "דיג׳יי נתי תמם", "בזעת", "מורעאק",
+  "טמפטו 1", "טמפטו 2", "בורות"
+];
+
+const SOCIAL_ORDER = [
+  "קולקטיב פרק 1", "קולקטיב פרק 2", "מרכז שלטון אזורי ישראל", "סיכום חתונה"
+];
+
+const orderIndex = (title: string, list: string[]) => {
+  const i = list.findIndex(t => t === title);
+  return i === -1 ? Number.MAX_SAFE_INTEGER : i;
+};
+
+/** המרה אוטומטית לקישורי embed של YouTube/Shorts */
+const toEmbedUrl = (url: string) => {
+  try {
+    const u = new URL(url);
+    // shorts
+    if (u.hostname.includes("youtube.com") && u.pathname.startsWith("/shorts/")) {
+      const id = u.pathname.split("/shorts/")[1].split("/")[0];
+      return `https://www.youtube.com/embed/${id}`;
+    }
+    // youtu.be
+    if (u.hostname === "youtu.be") {
+      const id = u.pathname.slice(1);
+      return `https://www.youtube.com/embed/${id}`;
+    }
+    // watch?v=
+    const v = u.searchParams.get("v");
+    if (v) return `https://www.youtube.com/embed/${v}`;
+    return url;
+  } catch {
+    return url;
+  }
+};
+
+/** קרוסלה לרילסים */
+const ReelsCarousel = ({
+  items,
+  onOpen
+}: {
+  items: Project[];
+  onOpen: (p: Project) => void;
+}) => {
+  const trackRef = useRef<HTMLDivElement>(null);
+
+  const scrollBy = (dir: number) => {
+    const el = trackRef.current;
+    if (!el) return;
+    const card = el.querySelector<HTMLElement>(".reel-card");
+    const step = card ? card.offsetWidth + 16 : 300;
+    el.scrollBy({ left: dir * step, behavior: "smooth" });
+  };
+
+  return (
+    <div className="reels-wrapper">
+      <button className="reel-arrow left" aria-label="previous reels" onClick={() => scrollBy(-1)}>‹</button>
+      <div className="reels-track" ref={trackRef}>
+        {items.map((p) => (
+          <div key={p.id} className="reel-card" onClick={() => onOpen(p)}>
+            <div className="reel-video">
+              <iframe
+                src={toEmbedUrl(p.videoUrl)}
+                title={p.title}
+                frameBorder={0}
+                allow="autoplay; fullscreen; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                allowFullScreen
+              />
+            </div>
+            <div className="reel-meta">
+              <h4>{p.title}</h4>
+              <p>{p.secondaryTitle}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+      <button className="reel-arrow right" aria-label="next reels" onClick={() => scrollBy(1)}>›</button>
+    </div>
+  );
+};
+
 const App = () => {
   const [activeSection, setActiveSection] = useState("home");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeFilter, setActiveFilter] = useState("all");
+  const [activeFilter, setActiveFilter] = useState<"all" | "colorGrading" | "videoEditing">("all");
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     message: ''
   });
-  
-  // Filter projects based on active filter
-  const filteredProjects = projects.data.filter(project => {
-    if (activeFilter === "all") return true;
-    if (activeFilter === "colorGrading") return project.type === "colorGrading" || project.type === "both";
-    if (activeFilter === "videoEditing") return project.type === "videoEditing" || project.type === "both";
-    return true;
-  });
+
   const homeRef = useRef<HTMLDivElement>(null);
   const projectsRef = useRef<HTMLDivElement>(null);
   const aboutRef = useRef<HTMLDivElement>(null);
@@ -79,7 +162,8 @@ const App = () => {
 
   useEffect(() => {
     // Simulate loading
-    setTimeout(() => setIsLoading(false), 1000);
+    const t = setTimeout(() => setIsLoading(false), 800);
+    return () => clearTimeout(t);
   }, []);
 
   const scrollToSection = (
@@ -90,7 +174,7 @@ const App = () => {
       const navbarHeight = 80;
       const yOffset = -navbarHeight;
       const y = ref.current.getBoundingClientRect().top + window.pageYOffset + yOffset;
-      
+
       window.scrollTo({ top: y, behavior: "smooth" });
       setActiveSection(section);
       setIsMenuOpen(false);
@@ -151,14 +235,30 @@ const App = () => {
   }, [isModalOpen]);
 
   const handleFormSubmit = () => {
-    // Since we can't use actual form submission, we'll open an email client
     const subject = encodeURIComponent('New Project Inquiry');
     const body = encodeURIComponent(`Name: ${formData.name}\nEmail: ${formData.email}\n\nMessage:\n${formData.message}`);
     window.location.href = `mailto:koraldayancohen@gmail.com?subject=${subject}&body=${body}`;
-    
-    // Reset form
+
     setFormData({ name: '', email: '', message: '' });
   };
+
+  /** --------------------- סינון והפרדה --------------------- */
+  const all: Project[] = projects.data as Project[];
+
+  const standardProjects = all
+    .filter(p =>
+      activeFilter === "all"
+        ? true
+        : activeFilter === "colorGrading"
+        ? p.type === "colorGrading" || p.type === "both"
+        : p.type === "videoEditing" || p.type === "both"
+    )
+    .filter(p => (p.format ?? "standard") !== "reel")
+    .sort((a, b) => orderIndex(a.title, ORDER) - orderIndex(b.title, ORDER));
+
+  const reelProjects = all
+    .filter(p => (p.format ?? "standard") === "reel")
+    .sort((a, b) => orderIndex(a.title, SOCIAL_ORDER) - orderIndex(b.title, SOCIAL_ORDER));
 
   if (isLoading) {
     return (
@@ -173,11 +273,9 @@ const App = () => {
       <nav className="navbar">
         <div className="nav-content">
           <div className="logo-container">
-            {/* <div className="logo-text">KORAL</div>
-             */}
             <div className="logo">
               <img
-                style={{ zIndex: 9999, position: "absolute", bottom:15}}
+                style={{ zIndex: 9999, position: "absolute", bottom: 15 }}
                 src="/Koral/WHITE.png"
                 alt="Koral Dayan"
                 className="logo"
@@ -249,30 +347,25 @@ const App = () => {
           </div>
         </section>
 
+        {/* Featured Projects (Standard) */}
         <section ref={projectsRef} className="section projects-section">
           <div className="section-header">
             <AnimatedTitle>Featured Projects</AnimatedTitle>
             <div className="filter-buttons">
               <button
-                className={`filter-btn ${
-                  activeFilter === "all" ? "active" : ""
-                }`}
+                className={`filter-btn ${activeFilter === "all" ? "active" : ""}`}
                 onClick={() => setActiveFilter("all")}
               >
                 All
               </button>
               <button
-                className={`filter-btn ${
-                  activeFilter === "colorGrading" ? "active" : ""
-                }`}
+                className={`filter-btn ${activeFilter === "colorGrading" ? "active" : ""}`}
                 onClick={() => setActiveFilter("colorGrading")}
               >
                 Color Grading
               </button>
               <button
-                className={`filter-btn ${
-                  activeFilter === "videoEditing" ? "active" : ""
-                }`}
+                className={`filter-btn ${activeFilter === "videoEditing" ? "active" : ""}`}
                 onClick={() => setActiveFilter("videoEditing")}
               >
                 Video Editing
@@ -282,14 +375,12 @@ const App = () => {
 
           <div className="projects-scroll-container">
             <div className="projects-grid">
-              {filteredProjects.map((project, index) => (
+              {standardProjects.map((project, index) => (
                 <div
                   key={project.id}
                   className="project-card"
                   onClick={() => openModal(project)}
-                  style={{
-                    animationDelay: `${index * 0.1}s`,
-                  }}
+                  style={{ animationDelay: `${index * 0.1}s` }}
                 >
                   <div className="project-image">
                     {project.title && (
@@ -311,12 +402,8 @@ const App = () => {
                     <div className="project-tags">
                       {project.type === "both" ? (
                         <>
-                          <span className="tag color-grading">
-                            Color Grading
-                          </span>
-                          <span className="tag video-editing">
-                            Video Editing
-                          </span>
+                          <span className="tag color-grading">Color Grading</span>
+                          <span className="tag video-editing">Video Editing</span>
                         </>
                       ) : project.type === "colorGrading" ? (
                         <span className="tag color-grading">Color Grading</span>
@@ -331,6 +418,17 @@ const App = () => {
           </div>
         </section>
 
+        {/* Reels & Social Carousel */}
+        <section className="section reels-section">
+          <div className="section-header">
+            <AnimatedTitle>Reels & Social</AnimatedTitle>
+          </div>
+          <div className="section-content">
+            <ReelsCarousel items={reelProjects} onOpen={openModal} />
+          </div>
+        </section>
+
+        {/* About */}
         <section ref={aboutRef} className="section about-section">
           <div className="section-content about-content">
             <div className="about-container">
@@ -393,6 +491,7 @@ const App = () => {
           </div>
         </section>
 
+        {/* Contact */}
         <section ref={contactRef} className="section contact-section">
           <div className="section-content">
             <div className="contact-container">
@@ -463,8 +562,8 @@ const App = () => {
       {isModalOpen && currentProject && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={closeModal}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <button className="modal-close" onClick={closeModal} aria-label="Close">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
                 <path
                   d="M18 6L6 18M6 6l12 12"
                   stroke="currentColor"
@@ -477,11 +576,11 @@ const App = () => {
             <p className="modal-subtitle">{currentProject.secondaryTitle}</p>
             <div className="video-container">
               <iframe
-                src={currentProject.videoUrl}
+                src={toEmbedUrl(currentProject.videoUrl)}
                 width="100%"
                 height="100%"
                 frameBorder="0"
-                allow="autoplay; fullscreen"
+                allow="autoplay; fullscreen; clipboard-write; encrypted-media; picture-in-picture; web-share"
                 allowFullScreen
                 title={currentProject.title}
               ></iframe>
@@ -496,7 +595,7 @@ const App = () => {
           padding: 0;
           box-sizing: border-box;
         }
-        
+
         :root {
           --primary-color: #ffffff;
           --secondary-color: #f0f0f0;
@@ -509,7 +608,7 @@ const App = () => {
           --shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
           --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        
+
         body {
           margin: 0;
           background-color: var(--dark-bg);
@@ -519,12 +618,12 @@ const App = () => {
           overflow-x: hidden;
           line-height: 1.6;
         }
-        
+
         main {
           width: 100vw;
           overflow-x: hidden;
         }
-        
+
         /* Loading Screen */
         .loading-screen {
           position: fixed;
@@ -538,7 +637,7 @@ const App = () => {
           align-items: center;
           z-index: 9999;
         }
-        
+
         .loader {
           width: 50px;
           height: 50px;
@@ -547,11 +646,11 @@ const App = () => {
           border-radius: 50%;
           animation: spin 1s linear infinite;
         }
-        
+
         @keyframes spin {
           to { transform: rotate(360deg); }
         }
-        
+
         /* Navbar */
         .navbar {
           position: fixed;
@@ -566,7 +665,7 @@ const App = () => {
           height: 80px;
           transition: var(--transition);
         }
-        
+
         .nav-content {
           max-width: 1400px;
           margin: 0 auto;
@@ -576,28 +675,18 @@ const App = () => {
           justify-content: space-between;
           align-items: center;
         }
-        
+
         .logo-container {
           display: flex;
           align-items: center;
         }
-        
-        .logo-text {
-          font-size: 24px;
-          font-weight: 700;
-          letter-spacing: 2px;
-          background: linear-gradient(135deg, #fff 0%, #ccc 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-        }
-        
+
         .nav-links {
           display: flex;
           gap: 40px;
           align-items: center;
         }
-        
+
         .nav-links button {
           background: none;
           border: none;
@@ -609,7 +698,7 @@ const App = () => {
           position: relative;
           padding: 8px 0;
         }
-        
+
         .nav-links button::after {
           content: '';
           position: absolute;
@@ -620,19 +709,19 @@ const App = () => {
           background: var(--accent-color);
           transition: width 0.3s ease;
         }
-        
+
         .nav-links button:hover {
           color: var(--text-primary);
         }
-        
+
         .nav-links button.active {
           color: var(--text-primary);
         }
-        
+
         .nav-links button.active::after {
           width: 100%;
         }
-        
+
         .mobile-menu-toggle {
           display: none;
           background: none;
@@ -642,7 +731,7 @@ const App = () => {
           position: relative;
           z-index: 1001;
         }
-        
+
         .hamburger {
           display: block;
           width: 25px;
@@ -651,7 +740,7 @@ const App = () => {
           position: relative;
           transition: var(--transition);
         }
-        
+
         .hamburger::before,
         .hamburger::after {
           content: '';
@@ -661,29 +750,14 @@ const App = () => {
           background: var(--text-primary);
           transition: var(--transition);
         }
-        
-        .hamburger::before {
-          top: -8px;
-        }
-        
-        .hamburger::after {
-          bottom: -8px;
-        }
-        
-        .hamburger.open {
-          background: transparent;
-        }
-        
-        .hamburger.open::before {
-          top: 0;
-          transform: rotate(45deg);
-        }
-        
-        .hamburger.open::after {
-          bottom: 0;
-          transform: rotate(-45deg);
-        }
-        
+
+        .hamburger::before { top: -8px; }
+        .hamburger::after { bottom: -8px; }
+
+        .hamburger.open { background: transparent; }
+        .hamburger.open::before { top: 0; transform: rotate(45deg); }
+        .hamburger.open::after { bottom: 0; transform: rotate(-45deg); }
+
         /* Hero Section */
         .hero-section {
           position: relative;
@@ -693,7 +767,7 @@ const App = () => {
           justify-content: center;
           overflow: hidden;
         }
-        
+
         .hero-background {
           position: absolute;
           top: 0;
@@ -703,19 +777,19 @@ const App = () => {
           background: radial-gradient(ellipse at center, rgba(255, 107, 107, 0.1) 0%, transparent 70%);
           animation: pulse 4s ease-in-out infinite;
         }
-        
+
         @keyframes pulse {
           0%, 100% { opacity: 0.5; }
           50% { opacity: 1; }
         }
-        
+
         .hero-content {
           text-align: center;
           z-index: 1;
           max-width: 1000px;
           padding: 0 20px;
         }
-        
+
         .hero-title {
           font-size: clamp(3rem, 8vw, 6rem);
           font-weight: 900;
@@ -723,35 +797,22 @@ const App = () => {
           margin-bottom: 30px;
           animation: fadeInUp 1s ease-out;
         }
-        
-        .title-line {
-          display: block;
-          margin: 10px 0;
-        }
-        
-        .title-line.accent {
-          color: var(--accent-color);
-          font-size: 0.8em;
-        }
-        
+
+        .title-line { display: block; margin: 10px 0; }
+        .title-line.accent { color: var(--accent-color); font-size: 0.8em; }
+
         @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+          from { opacity: 0; transform: translateY(30px); }
+          to { opacity: 1; transform: translateY(0); }
         }
-        
+
         .hero-subtitle {
           font-size: clamp(1.2rem, 3vw, 1.8rem);
           color: var(--text-secondary);
           margin-bottom: 40px;
           animation: fadeInUp 1s ease-out 0.2s both;
         }
-        
+
         .cta-button {
           display: inline-block;
           padding: 16px 40px;
@@ -767,12 +828,12 @@ const App = () => {
           cursor: pointer;
           transform: translateZ(0);
         }
-        
+
         .cta-button:hover {
           transform: translateY(-2px);
           box-shadow: 0 10px 30px rgba(255, 107, 107, 0.3);
         }
-        
+
         .scroll-indicator {
           position: absolute;
           bottom: 40px;
@@ -780,7 +841,7 @@ const App = () => {
           transform: translateX(-50%);
           animation: bounce 2s infinite;
         }
-        
+
         .mouse {
           width: 30px;
           height: 50px;
@@ -788,7 +849,7 @@ const App = () => {
           border-radius: 25px;
           position: relative;
         }
-        
+
         .mouse::after {
           content: '';
           position: absolute;
@@ -801,18 +862,18 @@ const App = () => {
           border-radius: 2px;
           animation: scroll 2s infinite;
         }
-        
+
         @keyframes bounce {
           0%, 20%, 50%, 80%, 100% { transform: translateX(-50%) translateY(0); }
           40% { transform: translateX(-50%) translateY(-10px); }
           60% { transform: translateX(-50%) translateY(-5px); }
         }
-        
+
         @keyframes scroll {
           0% { opacity: 1; transform: translateX(-50%) translateY(0); }
           100% { opacity: 0; transform: translateX(-50%) translateY(20px); }
         }
-        
+
         /* Section Styles */
         .section {
           min-height: 100vh;
@@ -822,12 +883,12 @@ const App = () => {
           align-items: center;
           justify-content: center;
         }
-        
+
         .section-content {
           width: 100%;
           padding: 100px 80px 60px;
         }
-        
+
         .section-header {
           max-width: 1400px;
           margin: 0 auto;
@@ -838,7 +899,7 @@ const App = () => {
           flex-wrap: wrap;
           gap: 20px;
         }
-        
+
         .section-title {
           font-size: clamp(2.5rem, 5vw, 4rem);
           font-weight: 800;
@@ -848,7 +909,7 @@ const App = () => {
           text-align: left;
           cursor: default;
         }
-        
+
         .section-title::after {
           content: '';
           position: absolute;
@@ -859,11 +920,9 @@ const App = () => {
           background: var(--accent-color);
           transition: width 0.8s ease 0.5s;
         }
-        
-        .section-title.animate::after {
-          width: 100%;
-        }
-        
+
+        .section-title.animate::after { width: 100%; }
+
         .section-title span {
           display: inline-block;
           position: relative;
@@ -871,35 +930,18 @@ const App = () => {
           opacity: 0;
           transform: translateY(20px);
         }
-        
-        .section-title.animate span {
-          animation: letterDrop 0.6s ease forwards;
-        }
-        
+
+        .section-title.animate span { animation: letterDrop 0.6s ease forwards; }
+
         @keyframes letterDrop {
-          0% {
-            opacity: 0;
-            transform: translateY(20px) rotateZ(-5deg);
-            color: var(--text-primary);
-          }
-          50% {
-            opacity: 1;
-            transform: translateY(-5px) rotateZ(2deg);
-            color: var(--accent-color);
-          }
-          100% {
-            opacity: 1;
-            transform: translateY(0) rotateZ(0);
-            color: var(--text-primary);
-          }
+          0% { opacity: 0; transform: translateY(20px) rotateZ(-5deg); color: var(--text-primary); }
+          50% { opacity: 1; transform: translateY(-5px) rotateZ(2deg); color: var(--accent-color); }
+          100% { opacity: 1; transform: translateY(0) rotateZ(0); color: var(--text-primary); }
         }
-        
+
         /* Filter Buttons */
-        .filter-buttons {
-          display: flex;
-          gap: 10px;
-        }
-        
+        .filter-buttons { display: flex; gap: 10px; }
+
         .filter-btn {
           padding: 8px 20px;
           background: transparent;
@@ -911,14 +953,14 @@ const App = () => {
           font-size: 14px;
           font-weight: 500;
         }
-        
+
         .filter-btn:hover,
         .filter-btn.active {
           background: var(--accent-color);
           border-color: var(--accent-color);
           color: white;
         }
-        
+
         /* Projects Section */
         .projects-section {
           background: var(--gray-bg);
@@ -928,7 +970,7 @@ const App = () => {
           flex-direction: column;
           overflow: hidden;
         }
-        
+
         .section-header {
           width: 100%;
           padding: 80px 80px 30px;
@@ -939,7 +981,7 @@ const App = () => {
           gap: 20px;
           flex-shrink: 0;
         }
-        
+
         .projects-scroll-container {
           flex: 1;
           overflow-y: auto;
@@ -948,25 +990,12 @@ const App = () => {
           scrollbar-width: thin;
           scrollbar-color: #444 #222;
         }
-        
-        .projects-scroll-container::-webkit-scrollbar {
-          width: 8px;
-        }
-        
-        .projects-scroll-container::-webkit-scrollbar-track {
-          background: #222;
-          border-radius: 4px;
-        }
-        
-        .projects-scroll-container::-webkit-scrollbar-thumb {
-          background-color: #444;
-          border-radius: 4px;
-        }
-        
-        .projects-scroll-container::-webkit-scrollbar-thumb:hover {
-          background-color: #555;
-        }
-        
+
+        .projects-scroll-container::-webkit-scrollbar { width: 8px; }
+        .projects-scroll-container::-webkit-scrollbar-track { background: #222; border-radius: 4px; }
+        .projects-scroll-container::-webkit-scrollbar-thumb { background-color: #444; border-radius: 4px; }
+        .projects-scroll-container::-webkit-scrollbar-thumb:hover { background-color: #555; }
+
         .projects-grid {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
@@ -974,7 +1003,7 @@ const App = () => {
           padding-bottom: 20px;
           width: 100%;
         }
-        
+
         .project-card {
           background: rgba(255, 255, 255, 0.03);
           border-radius: 16px;
@@ -984,20 +1013,20 @@ const App = () => {
           border: 1px solid var(--border-color);
           animation: fadeInUp 0.6s ease-out both;
         }
-        
+
         .project-card:hover {
           transform: translateY(-10px);
           border-color: rgba(255, 255, 255, 0.2);
           box-shadow: var(--shadow);
         }
-        
+
         .project-image {
           width: 100%;
           height: 250px;
           overflow: hidden;
           position: relative;
         }
-        
+
         .project-thumbnail {
           width: 100%;
           height: 100%;
@@ -1005,11 +1034,9 @@ const App = () => {
           display: block;
           transition: transform 0.3s ease;
         }
-        
-        .project-card:hover .project-thumbnail {
-          transform: scale(1.05);
-        }
-        
+
+        .project-card:hover .project-thumbnail { transform: scale(1.05); }
+
         .placeholder-image {
           width: 100%;
           height: 100%;
@@ -1020,28 +1047,15 @@ const App = () => {
           font-size: 18px;
           color: var(--text-secondary);
         }
-        
-        .project-content {
-          padding: 30px;
-        }
-        
-        .project-title {
-          font-size: 24px;
-          font-weight: 700;
-          margin-bottom: 8px;
-        }
-        
-        .project-subtitle {
-          color: var(--text-secondary);
-          margin-bottom: 20px;
-        }
-        
-        .project-tags {
-          display: flex;
-          gap: 10px;
-          flex-wrap: wrap;
-        }
-        
+
+        .project-content { padding: 30px; }
+
+        .project-title { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+
+        .project-subtitle { color: var(--text-secondary); margin-bottom: 20px; }
+
+        .project-tags { display: flex; gap: 10px; flex-wrap: wrap; }
+
         .tag {
           padding: 6px 16px;
           border-radius: 20px;
@@ -1050,37 +1064,17 @@ const App = () => {
           text-transform: uppercase;
           letter-spacing: 0.5px;
         }
-        
-        .tag.color-grading {
-          background: rgba(216, 157, 157, 0.2);
-          color: #d89d9d;
-        }
-        
-        .tag.video-editing {
-          background: rgba(127, 154, 235, 0.2);
-          color: #7f9aeb;
-        }
-        
+
+        .tag.color-grading { background: rgba(216, 157, 157, 0.2); color: #d89d9d; }
+        .tag.video-editing { background: rgba(127, 154, 235, 0.2); color: #7f9aeb; }
+
         /* About Section */
-        .about-section {
-          background: var(--dark-bg);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        
-        .about-content {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          min-height: 100vh;
-        }
-        
-        .about-container {
-          max-width: 1200px;
-          margin: 0 auto;
-        }
-        
+        .about-section { background: var(--dark-bg); display: flex; align-items: center; justify-content: center; }
+
+        .about-content { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+
+        .about-container { max-width: 1200px; margin: 0 auto; }
+
         .about-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
@@ -1088,31 +1082,20 @@ const App = () => {
           align-items: start;
           margin-top: 60px;
         }
-        
-        .about-text {
-          font-size: 18px;
-          line-height: 1.8;
-        }
-        
-        .lead-text {
-          font-size: 24px;
-          font-weight: 600;
-          margin-bottom: 30px;
-          color: var(--text-primary);
-        }
-        
-        .about-text p {
-          margin-bottom: 20px;
-          color: var(--text-secondary);
-        }
-        
+
+        .about-text { font-size: 18px; line-height: 1.8; }
+
+        .lead-text { font-size: 24px; font-weight: 600; margin-bottom: 30px; color: var(--text-primary); }
+
+        .about-text p { margin-bottom: 20px; color: var(--text-secondary); }
+
         .skills-list {
           display: grid;
           grid-template-columns: repeat(2, 1fr);
           gap: 20px;
           margin-top: 40px;
         }
-        
+
         .skill-item {
           display: flex;
           align-items: center;
@@ -1123,21 +1106,13 @@ const App = () => {
           border: 1px solid var(--border-color);
           transition: var(--transition);
         }
-        
-        .skill-item:hover {
-          border-color: var(--accent-color);
-          transform: translateX(5px);
-        }
-        
-        .skill-icon {
-          font-size: 28px;
-        }
-        
-        .about-stats {
-          display: grid;
-          gap: 30px;
-        }
-        
+
+        .skill-item:hover { border-color: var(--accent-color); transform: translateX(5px); }
+
+        .skill-icon { font-size: 28px; }
+
+        .about-stats { display: grid; gap: 30px; }
+
         .stat-card {
           padding: 40px;
           background: rgba(255, 255, 255, 0.03);
@@ -1146,60 +1121,26 @@ const App = () => {
           text-align: center;
           transition: var(--transition);
         }
-        
-        .stat-card:hover {
-          border-color: var(--accent-color);
-          transform: translateY(-5px);
-        }
-        
-        .stat-card h3 {
-          font-size: 48px;
-          font-weight: 800;
-          color: var(--accent-color);
-          margin-bottom: 10px;
-        }
-        
-        .stat-card p {
-          color: var(--text-secondary);
-          font-size: 18px;
-        }
-        
+
+        .stat-card:hover { border-color: var(--accent-color); transform: translateY(-5px); }
+
+        .stat-card h3 { font-size: 48px; font-weight: 800; color: var(--accent-color); margin-bottom: 10px; }
+
+        .stat-card p { color: var(--text-secondary); font-size: 18px; }
+
         /* Contact Section */
-        .contact-section {
-          background: var(--gray-bg);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        
-        .contact-container {
-          width: 100%;
-          text-align: left;
-        }
-        
-        .contact-container .section-title {
-          text-align: left;
-          margin-bottom: 20px;
-        }
-        
-        .contact-subtitle {
-          font-size: 20px;
-          color: var(--text-secondary);
-          margin-bottom: 50px;
-          text-align: left;
-        }
-        
-        .contact-form {
-          display: flex;
-          flex-direction: column;
-          gap: 20px;
-          max-width: 700px;
-        }
-        
-        .form-group {
-          position: relative;
-        }
-        
+        .contact-section { background: var(--gray-bg); display: flex; align-items: center; justify-content: center; }
+
+        .contact-container { width: 100%; text-align: left; }
+
+        .contact-container .section-title { text-align: left; margin-bottom: 20px; }
+
+        .contact-subtitle { font-size: 20px; color: var(--text-secondary); margin-bottom: 50px; text-align: left; }
+
+        .contact-form { display: flex; flex-direction: column; gap: 20px; max-width: 700px; }
+
+        .form-group { position: relative; }
+
         .form-input {
           width: 100%;
           padding: 20px;
@@ -1211,22 +1152,13 @@ const App = () => {
           transition: var(--transition);
           font-family: inherit;
         }
-        
-        .form-input:focus {
-          outline: none;
-          border-color: var(--accent-color);
-          background: rgba(255, 255, 255, 0.05);
-        }
-        
-        .form-input::placeholder {
-          color: var(--text-secondary);
-        }
-        
-        textarea.form-input {
-          resize: vertical;
-          min-height: 150px;
-        }
-        
+
+        .form-input:focus { outline: none; border-color: var(--accent-color); background: rgba(255, 255, 255, 0.05); }
+
+        .form-input::placeholder { color: var(--text-secondary); }
+
+        textarea.form-input { resize: vertical; min-height: 150px; }
+
         .submit-button {
           padding: 18px 40px;
           background: var(--accent-color);
@@ -1239,39 +1171,19 @@ const App = () => {
           transition: var(--transition);
           margin-top: 20px;
         }
-        
-        .submit-button:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 10px 30px rgba(255, 107, 107, 0.3);
-        }
-        
-        .submit-button:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-        
-        .contact-alternatives {
-          margin-top: 60px;
-          text-align: left;
-        }
-        
-        .contact-alternatives p {
-          color: var(--text-secondary);
-          margin-bottom: 15px;
-        }
-        
-        .email-link {
-          color: var(--accent-color);
-          text-decoration: none;
-          font-size: 20px;
-          font-weight: 600;
-          transition: var(--transition);
-        }
-        
-        .email-link:hover {
-          text-decoration: underline;
-        }
-        
+
+        .submit-button:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(255, 107, 107, 0.3); }
+
+        .submit-button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .contact-alternatives { margin-top: 60px; text-align: left; }
+
+        .contact-alternatives p { color: var(--text-secondary); margin-bottom: 15px; }
+
+        .email-link { color: var(--accent-color); text-decoration: none; font-size: 20px; font-weight: 600; transition: var(--transition); }
+
+        .email-link:hover { text-decoration: underline; }
+
         /* Modal */
         .modal-overlay {
           position: fixed;
@@ -1287,12 +1199,9 @@ const App = () => {
           padding: 20px;
           animation: fadeIn 0.3s ease-out;
         }
-        
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
         .modal {
           background-color: var(--gray-bg);
           padding: 40px;
@@ -1305,18 +1214,12 @@ const App = () => {
           position: relative;
           animation: slideIn 0.3s ease-out;
         }
-        
+
         @keyframes slideIn {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
         }
-        
+
         .modal-close {
           position: absolute;
           top: 20px;
@@ -1329,22 +1232,13 @@ const App = () => {
           transition: var(--transition);
           border-radius: 8px;
         }
-        
-        .modal-close:hover {
-          color: var(--text-primary);
-          background: rgba(255, 255, 255, 0.1);
-        }
-        
-        .modal-title {
-          font-size: 32px;
-          margin-bottom: 10px;
-        }
-        
-        .modal-subtitle {
-          color: var(--text-secondary);
-          margin-bottom: 30px;
-        }
-        
+
+        .modal-close:hover { color: var(--text-primary); background: rgba(255, 255, 255, 0.1); }
+
+        .modal-title { font-size: 32px; margin-bottom: 10px; }
+
+        .modal-subtitle { color: var(--text-secondary); margin-bottom: 30px; }
+
         .video-container {
           width: 100%;
           padding-bottom: 56.25%;
@@ -1353,32 +1247,101 @@ const App = () => {
           border-radius: 12px;
           overflow: hidden;
         }
-        
+
         .video-container iframe {
           position: absolute;
-          top: 0;
-          left: 0;
+          top: 0; left: 0;
+          width: 100%; height: 100%;
+        }
+
+        /* ---------- Reels ---------- */
+        .reels-section { background: var(--dark-bg); }
+
+        .reels-wrapper {
+          position: relative;
+          width: 100%;
+          padding: 0 60px; /* מקום לחצים */
+        }
+
+        .reels-track {
+          display: grid;
+          grid-auto-flow: column;
+          grid-auto-columns: minmax(240px, 280px);
+          gap: 16px;
+          overflow-x: auto;
+          scroll-snap-type: x mandatory;
+          padding-bottom: 12px;
+          scrollbar-width: thin;
+          scrollbar-color: #444 #222;
+        }
+
+        .reels-track::-webkit-scrollbar { height: 8px; }
+        .reels-track::-webkit-scrollbar-track { background: #222; border-radius: 4px; }
+        .reels-track::-webkit-scrollbar-thumb { background-color: #444; border-radius: 4px; }
+        .reels-track::-webkit-scrollbar-thumb:hover { background-color: #555; }
+
+        .reel-card {
+          background: rgba(255,255,255,0.03);
+          border: 1px solid var(--border-color);
+          border-radius: 16px;
+          scroll-snap-align: start;
+          cursor: pointer;
+          transition: var(--transition);
+          overflow: hidden;
+        }
+
+        .reel-card:hover {
+          transform: translateY(-6px);
+          border-color: rgba(255,255,255,0.2);
+          box-shadow: var(--shadow);
+        }
+
+        .reel-video {
+          position: relative;
+          width: 100%;
+          /* 9:16 ratio → 16/9 = 1.7778 → 177.78% */
+          padding-bottom: 177.78%;
+          background: #000;
+        }
+
+        .reel-video iframe {
+          position: absolute;
+          inset: 0;
           width: 100%;
           height: 100%;
         }
-        
+
+        .reel-meta { padding: 12px 14px 16px; }
+        .reel-meta h4 { font-size: 16px; margin-bottom: 6px; }
+        .reel-meta p { color: var(--text-secondary); font-size: 14px; }
+
+        .reel-arrow {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 44px; height: 44px;
+          border-radius: 50%;
+          border: 1px solid var(--border-color);
+          background: rgba(255,255,255,0.04);
+          color: var(--text-primary);
+          display: grid; place-items: center;
+          cursor: pointer;
+          transition: var(--transition);
+          z-index: 2;
+        }
+        .reel-arrow:hover { background: rgba(255,255,255,0.1); }
+        .reel-arrow.left { left: 10px; }
+        .reel-arrow.right { right: 10px; }
+
         /* Responsive Design */
         @media (max-width: 1024px) {
-          .about-grid {
-            grid-template-columns: 1fr;
-            gap: 40px;
-          }
-          
-          .projects-grid {
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-          }
+          .about-grid { grid-template-columns: 1fr; gap: 40px; }
+          .projects-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
         }
-        
+
         @media (max-width: 768px) {
-          .mobile-menu-toggle {
-            display: block;
-          }
-          
+          .mobile-menu-toggle { display: block; }
+
           .nav-links {
             position: fixed;
             top: 80px;
@@ -1392,94 +1355,43 @@ const App = () => {
             transition: right 0.3s ease;
             border-top: 1px solid var(--border-color);
           }
-          
-          .nav-links.mobile-open {
-            right: 0;
-          }
-          
-          .nav-links button {
-            font-size: 20px;
-            width: 100%;
-            text-align: left;
-          }
-          
-          .section-header {
-            flex-direction: column;
-            align-items: flex-start;
-          }
-          
-          .filter-buttons {
-            width: 100%;
-            overflow-x: auto;
-            padding-bottom: 10px;
-          }
-          
-          .section-content {
-            padding: 80px 20px 40px;
-          }
-          
-          .projects-section {
-            height: auto;
-            min-height: 100vh;
-          }
-          
-          .section-header {
-            padding: 80px 20px 20px;
-          }
-          
-          .projects-scroll-container {
-            padding: 0 20px 20px;
-            max-height: none;
-            overflow-y: visible;
-          }
-          
-          .projects-grid {
-            grid-template-columns: 1fr;
-            gap: 20px;
-          }
-          
-          .hero-title {
-            font-size: clamp(2.5rem, 6vw, 4rem);
-          }
-          
-          .skills-list {
-            grid-template-columns: 1fr;
-          }
-          
-          .modal {
-            padding: 30px 20px;
-          }
-          
-          .about-stats {
-            grid-template-columns: 1fr;
-          }
+
+          .nav-links.mobile-open { right: 0; }
+
+          .nav-links button { font-size: 20px; width: 100%; text-align: left; }
+
+          .section-header { flex-direction: column; align-items: flex-start; }
+
+          .filter-buttons { width: 100%; overflow-x: auto; padding-bottom: 10px; }
+
+          .section-content { padding: 80px 20px 40px; }
+
+          .projects-section { height: auto; min-height: 100vh; }
+
+          .section-header { padding: 80px 20px 20px; }
+
+          .projects-scroll-container { padding: 0 20px 20px; max-height: none; overflow-y: visible; }
+
+          .projects-grid { grid-template-columns: 1fr; gap: 20px; }
+
+          .hero-title { font-size: clamp(2.5rem, 6vw, 4rem); }
+
+          .skills-list { grid-template-columns: 1fr; }
+
+          .modal { padding: 30px 20px; }
+
+          .about-stats { grid-template-columns: 1fr; }
+
+          .reels-wrapper { padding: 0 36px; }
+          .reels-track { grid-auto-columns: 70vw; }
         }
-        
+
         @media (max-width: 480px) {
-          .nav-content {
-            padding: 0 20px;
-          }
-          
-          .logo-text {
-            font-size: 18px;
-          }
-          
-          .project-card {
-            border-radius: 12px;
-          }
-          
-          .project-content {
-            padding: 20px;
-          }
-          
-          .hero-subtitle {
-            font-size: 1.1rem;
-          }
-          
-          .cta-button {
-            padding: 14px 32px;
-            font-size: 16px;
-          }
+          .nav-content { padding: 0 20px; }
+          .project-card { border-radius: 12px; }
+          .project-content { padding: 20px; }
+          .hero-subtitle { font-size: 1.1rem; }
+          .cta-button { padding: 14px 32px; font-size: 16px; }
         }
       `}</style>
     </>
