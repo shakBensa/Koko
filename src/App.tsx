@@ -1,5 +1,4 @@
 import React, { useRef, useState, useEffect } from "react";
-import projects from "./projects.json";
 
 interface Project {
   id: number;
@@ -10,39 +9,97 @@ interface Project {
   thumbnail?: string;
 }
 
-// interface ProjectsData {
-//   data: Project[];
-// }
+// Import your actual projects data
+import projects from "./projects.json";
+
+// Component to animate section titles
+const AnimatedTitle = ({ children }: { children: string }) => {
+  const [isVisible, setIsVisible] = useState(false);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !isVisible) {
+          setIsVisible(true);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (titleRef.current) {
+      observer.observe(titleRef.current);
+    }
+
+    return () => {
+      if (titleRef.current) {
+        observer.unobserve(titleRef.current);
+      }
+    };
+  }, [isVisible]);
+
+  return (
+    <h2 ref={titleRef} className={`section-title ${isVisible ? 'animate' : ''}`}>
+      {children.split('').map((letter, index) => (
+        <span
+          key={index}
+          style={{ animationDelay: `${index * 0.03}s` }}
+        >
+          {letter === ' ' ? '\u00A0' : letter}
+        </span>
+      ))}
+    </h2>
+  );
+};
 
 const App = () => {
   const [activeSection, setActiveSection] = useState("home");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [activeFilter, setActiveFilter] = useState("all");
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    message: ''
+  });
   
+  // Filter projects based on active filter
+  const filteredProjects = projects.data.filter(project => {
+    if (activeFilter === "all") return true;
+    if (activeFilter === "colorGrading") return project.type === "colorGrading" || project.type === "both";
+    if (activeFilter === "videoEditing") return project.type === "videoEditing" || project.type === "both";
+    return true;
+  });
   const homeRef = useRef<HTMLDivElement>(null);
   const projectsRef = useRef<HTMLDivElement>(null);
   const aboutRef = useRef<HTMLDivElement>(null);
   const contactRef = useRef<HTMLDivElement>(null);
-  const projectsGridRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Simulate loading
+    setTimeout(() => setIsLoading(false), 1000);
+  }, []);
 
   const scrollToSection = (
     ref: React.MutableRefObject<HTMLDivElement | null>,
-    section: React.SetStateAction<string>
+    section: string
   ) => {
     if (ref.current) {
-      // Add offset to account for the navbar height
-      const navbarHeight = 64;
+      const navbarHeight = 80;
       const yOffset = -navbarHeight;
       const y = ref.current.getBoundingClientRect().top + window.pageYOffset + yOffset;
       
       window.scrollTo({ top: y, behavior: "smooth" });
       setActiveSection(section);
+      setIsMenuOpen(false);
     }
   };
 
   useEffect(() => {
     const handleScroll = () => {
-      const scrollPosition = window.scrollY + 80; // Adjusted to account for navbar
+      const scrollPosition = window.scrollY + 100;
       const sections = [
         { ref: homeRef, id: "home" },
         { ref: projectsRef, id: "projects" },
@@ -74,28 +131,70 @@ const App = () => {
   const openModal = (project: Project) => {
     setCurrentProject(project);
     setIsModalOpen(true);
+    document.body.style.overflow = 'hidden';
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
     setCurrentProject(null);
+    document.body.style.overflow = 'auto';
   };
+
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isModalOpen) {
+        closeModal();
+      }
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isModalOpen]);
+
+  const handleFormSubmit = () => {
+    // Since we can't use actual form submission, we'll open an email client
+    const subject = encodeURIComponent('New Project Inquiry');
+    const body = encodeURIComponent(`Name: ${formData.name}\nEmail: ${formData.email}\n\nMessage:\n${formData.message}`);
+    window.location.href = `mailto:koraldayancohen@gmail.com?subject=${subject}&body=${body}`;
+    
+    // Reset form
+    setFormData({ name: '', email: '', message: '' });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="loading-screen">
+        <div className="loader"></div>
+      </div>
+    );
+  }
 
   return (
     <>
       <nav className="navbar">
         <div className="nav-content">
-          <div className="logo">
-            <img
-              style={{ zIndex: 9999, position: "absolute", top: 15 }}
-              src="/Koral/WHITE.png"
-              alt="Koral Dayan"
-              className="logo"
-              width={100}
-            />
+          <div className="logo-container">
+            {/* <div className="logo-text">KORAL</div>
+             */}
+            <div className="logo">
+              <img
+                style={{ zIndex: 9999, position: "absolute", bottom:15}}
+                src="/Koral/WHITE.png"
+                alt="Koral Dayan"
+                className="logo"
+                width={125}
+              />
+            </div>
           </div>
 
-          <div className="nav-links">
+          <button
+            className="mobile-menu-toggle"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            <span className={`hamburger ${isMenuOpen ? "open" : ""}`}></span>
+          </button>
+
+          <div className={`nav-links ${isMenuOpen ? "mobile-open" : ""}`}>
             <button
               onClick={() => scrollToSection(homeRef, "home")}
               className={activeSection === "home" ? "active" : ""}
@@ -125,73 +224,106 @@ const App = () => {
       </nav>
 
       <main>
-        <section ref={homeRef} className="section">
-          <div className="section-content">
-            <h1 className="homeTitle">Video Editor & Color Grader</h1>
-            <img
-              src="/Koral/BLACK.png"
-              alt="Koral Dayan"
-              width={100}
-              height={100}
-            />
-
-            <p className="subtitle">
-              Transforming visions into cinematic reality
-            </p>
+        <section ref={homeRef} className="section hero-section">
+          <div className="hero-background"></div>
+          <div className="section-content hero-content">
+            <div className="hero-text">
+              <h1 className="hero-title">
+                <span className="title-line">Video Editor</span>
+                <span className="title-line accent">&</span>
+                <span className="title-line">Color Grader</span>
+              </h1>
+              <p className="hero-subtitle">
+                Transforming visions into cinematic reality
+              </p>
+              <button
+                className="cta-button"
+                onClick={() => scrollToSection(projectsRef, "projects")}
+              >
+                View My Work
+              </button>
+            </div>
+          </div>
+          <div className="scroll-indicator">
+            <div className="mouse"></div>
           </div>
         </section>
 
-        <section ref={projectsRef} className="section gray-bg projects-section">
-          <div className="projects-header">
-            <h2>Projects</h2>
+        <section ref={projectsRef} className="section projects-section">
+          <div className="section-header">
+            <AnimatedTitle>Featured Projects</AnimatedTitle>
+            <div className="filter-buttons">
+              <button
+                className={`filter-btn ${
+                  activeFilter === "all" ? "active" : ""
+                }`}
+                onClick={() => setActiveFilter("all")}
+              >
+                All
+              </button>
+              <button
+                className={`filter-btn ${
+                  activeFilter === "colorGrading" ? "active" : ""
+                }`}
+                onClick={() => setActiveFilter("colorGrading")}
+              >
+                Color Grading
+              </button>
+              <button
+                className={`filter-btn ${
+                  activeFilter === "videoEditing" ? "active" : ""
+                }`}
+                onClick={() => setActiveFilter("videoEditing")}
+              >
+                Video Editing
+              </button>
+            </div>
           </div>
-          <div className="projects-scroll-container" ref={projectsGridRef}>
+
+          <div className="projects-scroll-container">
             <div className="projects-grid">
-              {projects.data.map((project) => (
+              {filteredProjects.map((project, index) => (
                 <div
                   key={project.id}
-                  className="project-item"
+                  className="project-card"
                   onClick={() => openModal(project)}
+                  style={{
+                    animationDelay: `${index * 0.1}s`,
+                  }}
                 >
-                  {project.title && (
-                  <img
-                    src={`/Thumbnails/${project.title}.png`}
-                    onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.onerror = null;
-                    target.src = `/Thumbnails/${project.title}.jpg`;
-                    }}
-                    alt={project.title}
-                    className="project-thumbnail"
-                  />
-                  )}
-                  <div className="project-overlay">
-                  <div className="project-info">
-                    <div className="project-title">{project.title}</div>
-                    <div className="secondary-title">
-                    {project.secondaryTitle}
-                    </div>
-                    <div className="project-type">
-                    {project.type === "both" ? (
-                      <>
-                      <div className="type-bar colorGrading" />
-                      <span>Color Grading</span>
-                      <div className="type-bar videoEditing" />
-                      <span>Video Editing</span>
-                      </>
-                    ) : project.type === "colorGrading" ? (
-                      <>
-                      <div className="type-bar colorGrading" />
-                      <span>Color Grading</span>
-                      </>
-                    ) : (
-                      <>
-                      <div className="type-bar videoEditing" />
-                      <span>Video Editing</span>
-                      </>
+                  <div className="project-image">
+                    {project.title && (
+                      <img
+                        src={`/Thumbnails/${project.title}.png`}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.onerror = null;
+                          target.src = `/Thumbnails/${project.title}.jpg`;
+                        }}
+                        alt={project.title}
+                        className="project-thumbnail"
+                      />
                     )}
-                    </div>
                   </div>
+                  <div className="project-content">
+                    <h3 className="project-title">{project.title}</h3>
+                    <p className="project-subtitle">{project.secondaryTitle}</p>
+                    <div className="project-tags">
+                      {project.type === "both" ? (
+                        <>
+                          <span className="tag color-grading">
+                            Color Grading
+                          </span>
+                          <span className="tag video-editing">
+                            Video Editing
+                          </span>
+                        </>
+                      ) : project.type === "colorGrading" ? (
+                        <span className="tag color-grading">Color Grading</span>
+                      ) : (
+                        <span className="tag video-editing">Video Editing</span>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -199,46 +331,131 @@ const App = () => {
           </div>
         </section>
 
-        <section ref={aboutRef} className="section">
-          <div className="section-content">
-            <h2>About</h2>
-            <div className="about-text">
-              <p>
-                I'm Koral Dayan Cohen, a passionate video editor, director,
-                colorist, and producer. I specialize in crafting compelling
-                stories from concept to completion, balancing both creative
-                vision and technical excellence. With meticulous attention to
-                detail and a deep commitment to narrative, I bring each frame to
-                life, turning raw footage into powerful, engaging content. My
-                experience spans diverse projects—including documentaries,
-                narrative films, and beyond. I firmly believe in the emotional
-                power of video storytelling, and I'm dedicated to creating
-                content that resonates deeply with audiences. For me, every
-                frame counts, and every project receives the full heart and
-                passion it deserves.
-              </p>
+        <section ref={aboutRef} className="section about-section">
+          <div className="section-content about-content">
+            <div className="about-container">
+              <AnimatedTitle>About Me</AnimatedTitle>
+              <div className="about-grid">
+                <div className="about-text">
+                  <p className="lead-text">
+                    I'm Koral Dayan Cohen, a passionate video editor, director,
+                    colorist, and producer.
+                  </p>
+                  <p>
+                    I specialize in crafting compelling stories from concept to
+                    completion, balancing both creative vision and technical
+                    excellence. With meticulous attention to detail and a deep
+                    commitment to narrative, I bring each frame to life, turning
+                    raw footage into powerful, engaging content.
+                  </p>
+                  <p>
+                    My experience spans diverse projects—including
+                    documentaries, narrative films, and beyond. I firmly believe
+                    in the emotional power of video storytelling, and I'm
+                    dedicated to creating content that resonates deeply with
+                    audiences.
+                  </p>
+                  <div className="skills-list">
+                    <div className="skill-item">
+                      <div className="skill-icon">🎬</div>
+                      <span>Video Editing</span>
+                    </div>
+                    <div className="skill-item">
+                      <div className="skill-icon">🎨</div>
+                      <span>Color Grading</span>
+                    </div>
+                    <div className="skill-item">
+                      <div className="skill-icon">📽️</div>
+                      <span>Directing</span>
+                    </div>
+                    <div className="skill-item">
+                      <div className="skill-icon">🎞️</div>
+                      <span>Production</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="about-stats">
+                  <div className="stat-card">
+                    <h3>250+</h3>
+                    <p>Projects Completed</p>
+                  </div>
+                  <div className="stat-card">
+                    <h3>10+</h3>
+                    <p>Years Experience</p>
+                  </div>
+                  <div className="stat-card">
+                    <h3>100%</h3>
+                    <p>Client Satisfaction</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
 
-        <section ref={contactRef} className="section gray-bg">
+        <section ref={contactRef} className="section contact-section">
           <div className="section-content">
-            <h2>Contact</h2>
-            <form
-              className="contact-form"
-              action="https://formsubmit.co/koraldayancohen@gmail.com"
-              method="POST"
-            >
-              <input type="text" name="name" placeholder="Name" required />
-              <input type="email" name="email" placeholder="Email" required />
-              <textarea
-                name="message"
-                placeholder="Message"
-                rows={4}
-                required
-              ></textarea>
-              <button type="submit">Send Message</button>
-            </form>
+            <div className="contact-container">
+              <AnimatedTitle>Let's Work Together</AnimatedTitle>
+              <p className="contact-subtitle">
+                Have a project in mind? I'd love to hear about it.
+              </p>
+
+              <div className="contact-form">
+                <div className="form-group">
+                  <input
+                    type="text"
+                    placeholder="Your Name"
+                    value={formData.name}
+                    onChange={(e) =>
+                      setFormData({ ...formData, name: e.target.value })
+                    }
+                    className="form-input"
+                  />
+                </div>
+                <div className="form-group">
+                  <input
+                    type="email"
+                    placeholder="Your Email"
+                    value={formData.email}
+                    onChange={(e) =>
+                      setFormData({ ...formData, email: e.target.value })
+                    }
+                    className="form-input"
+                  />
+                </div>
+                <div className="form-group">
+                  <textarea
+                    placeholder="Tell me about your project"
+                    rows={6}
+                    value={formData.message}
+                    onChange={(e) =>
+                      setFormData({ ...formData, message: e.target.value })
+                    }
+                    className="form-input"
+                  ></textarea>
+                </div>
+                <button
+                  onClick={handleFormSubmit}
+                  className="submit-button"
+                  disabled={
+                    !formData.name || !formData.email || !formData.message
+                  }
+                >
+                  Send Message
+                </button>
+              </div>
+
+              <div className="contact-alternatives">
+                <p>Or reach out directly:</p>
+                <a
+                  href="mailto:koraldayancohen@gmail.com"
+                  className="email-link"
+                >
+                  koraldayancohen@gmail.com
+                </a>
+              </div>
+            </div>
           </div>
         </section>
       </main>
@@ -246,15 +463,29 @@ const App = () => {
       {isModalOpen && currentProject && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h3>{currentProject.title}</h3>
-            <iframe
-              src={currentProject.videoUrl}
-              width="100%"
-              height="480"
-              frameBorder="0"
-              allow="autoplay"
-              title="Project Video"
-            ></iframe>
+            <button className="modal-close" onClick={closeModal}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M18 6L6 18M6 6l12 12"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </button>
+            <h3 className="modal-title">{currentProject.title}</h3>
+            <p className="modal-subtitle">{currentProject.secondaryTitle}</p>
+            <div className="video-container">
+              <iframe
+                src={currentProject.videoUrl}
+                width="100%"
+                height="100%"
+                frameBorder="0"
+                allow="autoplay; fullscreen"
+                allowFullScreen
+                title={currentProject.title}
+              ></iframe>
+            </div>
           </div>
         </div>
       )}
@@ -265,311 +496,990 @@ const App = () => {
           padding: 0;
           box-sizing: border-box;
         }
+        
+        :root {
+          --primary-color: #ffffff;
+          --secondary-color: #f0f0f0;
+          --accent-color: #ff6b6b;
+          --dark-bg: #0a0a0a;
+          --gray-bg: #111111;
+          --text-primary: #ffffff;
+          --text-secondary: #b0b0b0;
+          --border-color: rgba(255, 255, 255, 0.1);
+          --shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+          --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
         body {
           margin: 0;
-          background-color: black;
-          color: white;
-          font-family: 'Jost', sans-serif;
+          background-color: var(--dark-bg);
+          color: var(--text-primary);
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
           width: 100%;
           overflow-x: hidden;
+          line-height: 1.6;
         }
+        
+        main {
+          width: 100vw;
+          overflow-x: hidden;
+        }
+        
+        /* Loading Screen */
+        .loading-screen {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100vh;
+          background: var(--dark-bg);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          z-index: 9999;
+        }
+        
+        .loader {
+          width: 50px;
+          height: 50px;
+          border: 3px solid var(--border-color);
+          border-top-color: var(--accent-color);
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+        
+        /* Navbar */
         .navbar {
           position: fixed;
           top: 0;
           left: 0;
           right: 0;
-          background-color: rgba(0, 0, 0, 0.9);
-          backdrop-filter: blur(8px);
-          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+          background: rgba(10, 10, 10, 0.85);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          border-bottom: 1px solid var(--border-color);
           z-index: 1000;
-          height: 64px;
+          height: 80px;
+          transition: var(--transition);
         }
+        
         .nav-content {
           max-width: 1400px;
           margin: 0 auto;
           padding: 0 40px;
-          height: 64px;
+          height: 100%;
           display: flex;
           justify-content: space-between;
           align-items: center;
         }
-        .logo {
-          font-size: 20px;
-          font-weight: bold;
+        
+        .logo-container {
+          display: flex;
+          align-items: center;
         }
+        
+        .logo-text {
+          font-size: 24px;
+          font-weight: 700;
+          letter-spacing: 2px;
+          background: linear-gradient(135deg, #fff 0%, #ccc 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+        
         .nav-links {
           display: flex;
-          gap: 32px;
+          gap: 40px;
+          align-items: center;
         }
+        
         .nav-links button {
           background: none;
           border: none;
-          color: white;
+          color: var(--text-secondary);
           cursor: pointer;
           font-size: 16px;
-          transition: all 0.3s ease;
+          font-weight: 500;
+          transition: var(--transition);
           position: relative;
-          padding-bottom: 4px;
+          padding: 8px 0;
         }
+        
+        .nav-links button::after {
+          content: '';
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          width: 0;
+          height: 2px;
+          background: var(--accent-color);
+          transition: width 0.3s ease;
+        }
+        
         .nav-links button:hover {
-          color: #cccccc;
+          color: var(--text-primary);
         }
+        
         .nav-links button.active {
-          color: white;
-          border-bottom: 2px solid white;
+          color: var(--text-primary);
         }
+        
+        .nav-links button.active::after {
+          width: 100%;
+        }
+        
+        .mobile-menu-toggle {
+          display: none;
+          background: none;
+          border: none;
+          cursor: pointer;
+          padding: 10px;
+          position: relative;
+          z-index: 1001;
+        }
+        
+        .hamburger {
+          display: block;
+          width: 25px;
+          height: 2px;
+          background: var(--text-primary);
+          position: relative;
+          transition: var(--transition);
+        }
+        
+        .hamburger::before,
+        .hamburger::after {
+          content: '';
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          background: var(--text-primary);
+          transition: var(--transition);
+        }
+        
+        .hamburger::before {
+          top: -8px;
+        }
+        
+        .hamburger::after {
+          bottom: -8px;
+        }
+        
+        .hamburger.open {
+          background: transparent;
+        }
+        
+        .hamburger.open::before {
+          top: 0;
+          transform: rotate(45deg);
+        }
+        
+        .hamburger.open::after {
+          bottom: 0;
+          transform: rotate(-45deg);
+        }
+        
+        /* Hero Section */
+        .hero-section {
+          position: relative;
+          min-height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+        }
+        
+        .hero-background {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: radial-gradient(ellipse at center, rgba(255, 107, 107, 0.1) 0%, transparent 70%);
+          animation: pulse 4s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+          0%, 100% { opacity: 0.5; }
+          50% { opacity: 1; }
+        }
+        
+        .hero-content {
+          text-align: center;
+          z-index: 1;
+          max-width: 1000px;
+          padding: 0 20px;
+        }
+        
+        .hero-title {
+          font-size: clamp(3rem, 8vw, 6rem);
+          font-weight: 900;
+          line-height: 1;
+          margin-bottom: 30px;
+          animation: fadeInUp 1s ease-out;
+        }
+        
+        .title-line {
+          display: block;
+          margin: 10px 0;
+        }
+        
+        .title-line.accent {
+          color: var(--accent-color);
+          font-size: 0.8em;
+        }
+        
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        .hero-subtitle {
+          font-size: clamp(1.2rem, 3vw, 1.8rem);
+          color: var(--text-secondary);
+          margin-bottom: 40px;
+          animation: fadeInUp 1s ease-out 0.2s both;
+        }
+        
+        .cta-button {
+          display: inline-block;
+          padding: 16px 40px;
+          background: var(--accent-color);
+          color: white;
+          text-decoration: none;
+          font-weight: 600;
+          font-size: 18px;
+          border-radius: 50px;
+          transition: var(--transition);
+          animation: fadeInUp 1s ease-out 0.4s both;
+          border: none;
+          cursor: pointer;
+          transform: translateZ(0);
+        }
+        
+        .cta-button:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 10px 30px rgba(255, 107, 107, 0.3);
+        }
+        
+        .scroll-indicator {
+          position: absolute;
+          bottom: 40px;
+          left: 50%;
+          transform: translateX(-50%);
+          animation: bounce 2s infinite;
+        }
+        
+        .mouse {
+          width: 30px;
+          height: 50px;
+          border: 2px solid var(--text-secondary);
+          border-radius: 25px;
+          position: relative;
+        }
+        
+        .mouse::after {
+          content: '';
+          position: absolute;
+          top: 8px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 4px;
+          height: 10px;
+          background: var(--text-secondary);
+          border-radius: 2px;
+          animation: scroll 2s infinite;
+        }
+        
+        @keyframes bounce {
+          0%, 20%, 50%, 80%, 100% { transform: translateX(-50%) translateY(0); }
+          40% { transform: translateX(-50%) translateY(-10px); }
+          60% { transform: translateX(-50%) translateY(-5px); }
+        }
+        
+        @keyframes scroll {
+          0% { opacity: 1; transform: translateX(-50%) translateY(0); }
+          100% { opacity: 0; transform: translateX(-50%) translateY(20px); }
+        }
+        
+        /* Section Styles */
         .section {
           min-height: 100vh;
-          width: 100vw;
+          position: relative;
+          overflow: hidden;
           display: flex;
-          flex-direction: column;
-          align-items: flex-start;
-          max-width: 100%;
-          overflow-x: hidden;
-          box-sizing: border-box;
-          padding-top: 24px; /* Add padding to account for fixed navbar */
+          align-items: center;
+          justify-content: center;
         }
-
-        /* Home section keeps original padding */
-        section:first-of-type .section-content {
-          padding-top: 40px;
-        }
-
-        /* Other sections get less top padding */
+        
         .section-content {
           width: 100%;
-          max-width: 100%;
-          padding: 20px 40px 40px 40px;
-          overflow-y: auto;
-          max-height: 100vh;
+          padding: 100px 80px 60px;
         }
-
+        
+        .section-header {
+          max-width: 1400px;
+          margin: 0 auto;
+          padding: 100px 40px 40px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 20px;
+        }
+        
+        .section-title {
+          font-size: clamp(2.5rem, 5vw, 4rem);
+          font-weight: 800;
+          margin-bottom: 20px;
+          position: relative;
+          display: inline-block;
+          text-align: left;
+          cursor: default;
+        }
+        
+        .section-title::after {
+          content: '';
+          position: absolute;
+          bottom: -10px;
+          left: 0;
+          width: 60px;
+          height: 4px;
+          background: var(--accent-color);
+          transition: width 0.8s ease 0.5s;
+        }
+        
+        .section-title.animate::after {
+          width: 100%;
+        }
+        
+        .section-title span {
+          display: inline-block;
+          position: relative;
+          transform-origin: bottom;
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        
+        .section-title.animate span {
+          animation: letterDrop 0.6s ease forwards;
+        }
+        
+        @keyframes letterDrop {
+          0% {
+            opacity: 0;
+            transform: translateY(20px) rotateZ(-5deg);
+            color: var(--text-primary);
+          }
+          50% {
+            opacity: 1;
+            transform: translateY(-5px) rotateZ(2deg);
+            color: var(--accent-color);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0) rotateZ(0);
+            color: var(--text-primary);
+          }
+        }
+        
+        /* Filter Buttons */
+        .filter-buttons {
+          display: flex;
+          gap: 10px;
+        }
+        
+        .filter-btn {
+          padding: 8px 20px;
+          background: transparent;
+          border: 1px solid var(--border-color);
+          color: var(--text-secondary);
+          border-radius: 25px;
+          cursor: pointer;
+          transition: var(--transition);
+          font-size: 14px;
+          font-weight: 500;
+        }
+        
+        .filter-btn:hover,
+        .filter-btn.active {
+          background: var(--accent-color);
+          border-color: var(--accent-color);
+          color: white;
+        }
+        
+        /* Projects Section */
         .projects-section {
-          height: calc(100vh - 64px);
+          background: var(--gray-bg);
+          height: 100vh;
           width: 100vw;
           display: flex;
           flex-direction: column;
           overflow: hidden;
         }
         
-        .projects-header {
-          padding: 0px 40px 20px 40px; /* Reduced top padding */
-          text-align: left;
+        .section-header {
           width: 100%;
+          padding: 80px 80px 30px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 20px;
+          flex-shrink: 0;
         }
         
         .projects-scroll-container {
           flex: 1;
           overflow-y: auto;
-          padding: 0 40px 40px 40px;
+          padding: 0 80px 40px;
           width: 100%;
-          max-height: calc(100vh - 160px); /* Account for navbar and header */
           scrollbar-width: thin;
+          scrollbar-color: #444 #222;
         }
         
         .projects-scroll-container::-webkit-scrollbar {
-          width: 6px;
+          width: 8px;
         }
         
         .projects-scroll-container::-webkit-scrollbar-track {
           background: #222;
+          border-radius: 4px;
         }
         
         .projects-scroll-container::-webkit-scrollbar-thumb {
           background-color: #444;
-          border-radius: 6px;
+          border-radius: 4px;
         }
-
+        
+        .projects-scroll-container::-webkit-scrollbar-thumb:hover {
+          background-color: #555;
+        }
+        
         .projects-grid {
           display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 24px;
+          grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+          gap: 30px;
+          padding-bottom: 20px;
           width: 100%;
         }
         
-        h2 {
-          padding: 0;
-          margin-bottom: 20px; /* Added margin below headings */
-        }
-        .homeTitle{
-        padding-top:48px;
-        }
-
-        .project-item {
-          cursor: pointer;
-          position: relative;
-          height: 220px;
-          width: 100%;
+        .project-card {
+          background: rgba(255, 255, 255, 0.03);
+          border-radius: 16px;
           overflow: hidden;
-          background-color: #000;
-          border-radius: 4px;
-          transition: transform 0.3s ease;
-          margin-bottom: 0;
+          cursor: pointer;
+          transition: var(--transition);
+          border: 1px solid var(--border-color);
+          animation: fadeInUp 0.6s ease-out both;
         }
-        .project-item:hover {
-          transform: scale(1.02);
+        
+        .project-card:hover {
+          transform: translateY(-10px);
+          border-color: rgba(255, 255, 255, 0.2);
+          box-shadow: var(--shadow);
         }
+        
+        .project-image {
+          width: 100%;
+          height: 250px;
+          overflow: hidden;
+          position: relative;
+        }
+        
         .project-thumbnail {
           width: 100%;
           height: 100%;
           object-fit: cover;
           display: block;
+          transition: transform 0.3s ease;
         }
-        .project-overlay {
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          background-color: rgba(0, 0, 0, 0.7);
-          overflow: hidden;
+        
+        .project-card:hover .project-thumbnail {
+          transform: scale(1.05);
+        }
+        
+        .placeholder-image {
           width: 100%;
-          height: 0;
-          transition: height 0.5s ease;
+          height: 100%;
+          background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
           display: flex;
           align-items: center;
           justify-content: center;
-        }
-        .project-item:hover .project-overlay {
-          height: 100%;
-        }
-        .project-info {
-          width: 100%;
-          height: 100%;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
-          text-align: center;
-          padding: 20px;
-          position: relative;
-          transform: translateY(50px);
-          transition: transform 0.5s ease;
-        }
-        .project-item:hover .project-info {
-          transform: translateY(0);
-        }
-        .project-title {
           font-size: 18px;
-          font-weight: bold;
+          color: var(--text-secondary);
+        }
+        
+        .project-content {
+          padding: 30px;
+        }
+        
+        .project-title {
+          font-size: 24px;
+          font-weight: 700;
           margin-bottom: 8px;
         }
-        .secondary-title {
-          font-size: 14px;
-          color: #cccccc;
-          margin-bottom: 16px;
+        
+        .project-subtitle {
+          color: var(--text-secondary);
+          margin-bottom: 20px;
         }
-        .project-type {
+        
+        .project-tags {
+          display: flex;
+          gap: 10px;
+          flex-wrap: wrap;
+        }
+        
+        .tag {
+          padding: 6px 16px;
+          border-radius: 20px;
           font-size: 12px;
-          color: #cccccc;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+        
+        .tag.color-grading {
+          background: rgba(216, 157, 157, 0.2);
+          color: #d89d9d;
+        }
+        
+        .tag.video-editing {
+          background: rgba(127, 154, 235, 0.2);
+          color: #7f9aeb;
+        }
+        
+        /* About Section */
+        .about-section {
+          background: var(--dark-bg);
           display: flex;
           align-items: center;
-          gap: 6px;
-          position: absolute;
-          bottom: 10px;
-          left: 10px;
+          justify-content: center;
         }
-        .type-bar {
-          width: 6px;
-          height: 16px;
+        
+        .about-content {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 100vh;
         }
-        @media (max-width: 1200px) {
-          .projects-grid {
-            grid-template-columns: repeat(2, 1fr);
-          }
-          .project-item {
-            height: 200px;
-          }
+        
+        .about-container {
+          max-width: 1200px;
+          margin: 0 auto;
         }
-        @media (max-width: 768px) {
-          .projects-grid {
-            grid-template-columns: repeat(1, 1fr);
-          }
-          .project-item {
-            height: 180px;
-          }
-          .projects-section {
-            height: auto;
-          }
-          .projects-header,
-          .projects-scroll-container {
-            padding-left: 16px;
-            padding-right: 16px;
-          }
-          .section-content {
-            padding: 20px 16px;
-          }
+        
+        .about-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 80px;
+          align-items: start;
+          margin-top: 60px;
         }
-        .colorGrading {
-          background-color: #d89d9d;
+        
+        .about-text {
+          font-size: 18px;
+          line-height: 1.8;
         }
-        .videoEditing {
-          background-color: #7f9aeb;
+        
+        .lead-text {
+          font-size: 24px;
+          font-weight: 600;
+          margin-bottom: 30px;
+          color: var(--text-primary);
         }
+        
+        .about-text p {
+          margin-bottom: 20px;
+          color: var(--text-secondary);
+        }
+        
+        .skills-list {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 20px;
+          margin-top: 40px;
+        }
+        
+        .skill-item {
+          display: flex;
+          align-items: center;
+          gap: 15px;
+          padding: 20px;
+          background: rgba(255, 255, 255, 0.03);
+          border-radius: 12px;
+          border: 1px solid var(--border-color);
+          transition: var(--transition);
+        }
+        
+        .skill-item:hover {
+          border-color: var(--accent-color);
+          transform: translateX(5px);
+        }
+        
+        .skill-icon {
+          font-size: 28px;
+        }
+        
+        .about-stats {
+          display: grid;
+          gap: 30px;
+        }
+        
+        .stat-card {
+          padding: 40px;
+          background: rgba(255, 255, 255, 0.03);
+          border-radius: 16px;
+          border: 1px solid var(--border-color);
+          text-align: center;
+          transition: var(--transition);
+        }
+        
+        .stat-card:hover {
+          border-color: var(--accent-color);
+          transform: translateY(-5px);
+        }
+        
+        .stat-card h3 {
+          font-size: 48px;
+          font-weight: 800;
+          color: var(--accent-color);
+          margin-bottom: 10px;
+        }
+        
+        .stat-card p {
+          color: var(--text-secondary);
+          font-size: 18px;
+        }
+        
+        /* Contact Section */
+        .contact-section {
+          background: var(--gray-bg);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        
+        .contact-container {
+          width: 100%;
+          text-align: left;
+        }
+        
+        .contact-container .section-title {
+          text-align: left;
+          margin-bottom: 20px;
+        }
+        
+        .contact-subtitle {
+          font-size: 20px;
+          color: var(--text-secondary);
+          margin-bottom: 50px;
+          text-align: left;
+        }
+        
+        .contact-form {
+          display: flex;
+          flex-direction: column;
+          gap: 20px;
+          max-width: 700px;
+        }
+        
+        .form-group {
+          position: relative;
+        }
+        
+        .form-input {
+          width: 100%;
+          padding: 20px;
+          background: rgba(255, 255, 255, 0.03);
+          border: 2px solid var(--border-color);
+          border-radius: 12px;
+          color: var(--text-primary);
+          font-size: 16px;
+          transition: var(--transition);
+          font-family: inherit;
+        }
+        
+        .form-input:focus {
+          outline: none;
+          border-color: var(--accent-color);
+          background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .form-input::placeholder {
+          color: var(--text-secondary);
+        }
+        
+        textarea.form-input {
+          resize: vertical;
+          min-height: 150px;
+        }
+        
+        .submit-button {
+          padding: 18px 40px;
+          background: var(--accent-color);
+          color: white;
+          border: none;
+          border-radius: 12px;
+          font-size: 18px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: var(--transition);
+          margin-top: 20px;
+        }
+        
+        .submit-button:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 10px 30px rgba(255, 107, 107, 0.3);
+        }
+        
+        .submit-button:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+        
+        .contact-alternatives {
+          margin-top: 60px;
+          text-align: left;
+        }
+        
+        .contact-alternatives p {
+          color: var(--text-secondary);
+          margin-bottom: 15px;
+        }
+        
+        .email-link {
+          color: var(--accent-color);
+          text-decoration: none;
+          font-size: 20px;
+          font-weight: 600;
+          transition: var(--transition);
+        }
+        
+        .email-link:hover {
+          text-decoration: underline;
+        }
+        
+        /* Modal */
         .modal-overlay {
           position: fixed;
           top: 0;
           left: 0;
           width: 100%;
           height: 100%;
-          background-color: rgba(0, 0, 0, 0.7);
+          background-color: rgba(0, 0, 0, 0.95);
           display: flex;
           justify-content: center;
           align-items: center;
           z-index: 2000;
+          padding: 20px;
+          animation: fadeIn 0.3s ease-out;
         }
+        
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        
         .modal {
-          background-color: black;
+          background-color: var(--gray-bg);
           padding: 40px;
-          border-radius: 12px;
-          max-width: 95%;
-          width: 1200px;
+          border-radius: 20px;
+          max-width: 90vw;
+          width: 1000px;
+          max-height: 90vh;
           display: flex;
           flex-direction: column;
-          gap: 20px;
-          text-align: center;
+          position: relative;
+          animation: slideIn 0.3s ease-out;
         }
-        video {
-          width: 100%;
-          height: auto;
+        
+        @keyframes slideIn {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        .modal-close {
+          position: absolute;
+          top: 20px;
+          right: 20px;
+          background: none;
+          border: none;
+          color: var(--text-secondary);
+          cursor: pointer;
+          padding: 10px;
+          transition: var(--transition);
           border-radius: 8px;
         }
-        iframe {
+        
+        .modal-close:hover {
+          color: var(--text-primary);
+          background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .modal-title {
+          font-size: 32px;
+          margin-bottom: 10px;
+        }
+        
+        .modal-subtitle {
+          color: var(--text-secondary);
+          margin-bottom: 30px;
+        }
+        
+        .video-container {
           width: 100%;
-          height: 600px;
+          padding-bottom: 56.25%;
+          position: relative;
+          background: #000;
+          border-radius: 12px;
+          overflow: hidden;
         }
-        .contact-form {
-          max-width: 500px;
-          margin: 0 auto;
-          display: flex;
-          flex-direction: column;
-          gap: 24px;
-        }
-        .contact-form input,
-        .contact-form textarea {
+        
+        .video-container iframe {
+          position: absolute;
+          top: 0;
+          left: 0;
           width: 100%;
-          padding: 12px;
-          background-color: black;
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          color: white;
-          outline: none;
+          height: 100%;
         }
-        .contact-form input:focus,
-        .contact-form textarea:focus {
-          border-color: white;
+        
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+          .about-grid {
+            grid-template-columns: 1fr;
+            gap: 40px;
+          }
+          
+          .projects-grid {
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+          }
         }
-        .contact-form button {
-          width: 100%;
-          padding: 12px;
-          background-color: white;
-          color: black;
-          border: none;
-          cursor: pointer;
+        
+        @media (max-width: 768px) {
+          .mobile-menu-toggle {
+            display: block;
+          }
+          
+          .nav-links {
+            position: fixed;
+            top: 80px;
+            right: -100%;
+            width: 100%;
+            height: calc(100vh - 80px);
+            background: var(--dark-bg);
+            flex-direction: column;
+            padding: 40px;
+            gap: 30px;
+            transition: right 0.3s ease;
+            border-top: 1px solid var(--border-color);
+          }
+          
+          .nav-links.mobile-open {
+            right: 0;
+          }
+          
+          .nav-links button {
+            font-size: 20px;
+            width: 100%;
+            text-align: left;
+          }
+          
+          .section-header {
+            flex-direction: column;
+            align-items: flex-start;
+          }
+          
+          .filter-buttons {
+            width: 100%;
+            overflow-x: auto;
+            padding-bottom: 10px;
+          }
+          
+          .section-content {
+            padding: 80px 20px 40px;
+          }
+          
+          .projects-section {
+            height: auto;
+            min-height: 100vh;
+          }
+          
+          .section-header {
+            padding: 80px 20px 20px;
+          }
+          
+          .projects-scroll-container {
+            padding: 0 20px 20px;
+            max-height: none;
+            overflow-y: visible;
+          }
+          
+          .projects-grid {
+            grid-template-columns: 1fr;
+            gap: 20px;
+          }
+          
+          .hero-title {
+            font-size: clamp(2.5rem, 6vw, 4rem);
+          }
+          
+          .skills-list {
+            grid-template-columns: 1fr;
+          }
+          
+          .modal {
+            padding: 30px 20px;
+          }
+          
+          .about-stats {
+            grid-template-columns: 1fr;
+          }
         }
-        .contact-form button:hover {
-          background-color: #cccccc;
-        }
-        .gray-bg {
-          background-color: #111;
+        
+        @media (max-width: 480px) {
+          .nav-content {
+            padding: 0 20px;
+          }
+          
+          .logo-text {
+            font-size: 18px;
+          }
+          
+          .project-card {
+            border-radius: 12px;
+          }
+          
+          .project-content {
+            padding: 20px;
+          }
+          
+          .hero-subtitle {
+            font-size: 1.1rem;
+          }
+          
+          .cta-button {
+            padding: 14px 32px;
+            font-size: 16px;
+          }
         }
       `}</style>
     </>
