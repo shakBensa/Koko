@@ -106,60 +106,63 @@ const ReelsCarousel = ({
 }) => {
   const trackRef = useRef<HTMLDivElement>(null);
   const [snapReady, setSnapReady] = useState(false);
+  const [resetKey, setResetKey] = useState(0); // <— NEW
+
+  const bump = () => setResetKey((k) => k + 1); // <— NEW
 
   // Always start at the first card (fixes initial right-shift)
   useLayoutEffect(() => {
     const el = trackRef.current;
     if (!el) return;
-    setSnapReady(false);                 // temporarily disable snap
-    // Wait for layout, then reset scrollLeft
+    setSnapReady(false);
     requestAnimationFrame(() => {
       el.scrollLeft = 0;
-      // enable snap after we placed the scroll position
       requestAnimationFrame(() => setSnapReady(true));
     });
-  }, [items.length]);
-useEffect(() => {
-  const el = trackRef.current;
-  if (!el) return;
+  }, [items.length, resetKey]); // <— depend on resetKey too
 
-  let raf1 = 0, raf2 = 0;
+  useEffect(() => {
+    const el = trackRef.current;
+    if (!el) return;
 
-  const hardReset = () => {
-    // temporarily disable snap
-    setSnapReady(false);
-    raf1 = requestAnimationFrame(() => {
-      el.scrollLeft = 0;
-      // do it twice in case browser restores after first frame
-      raf2 = requestAnimationFrame(() => {
+    let raf1 = 0, raf2 = 0;
+
+    const hardReset = () => {
+      setSnapReady(false);
+      // 1) zero twice
+      raf1 = requestAnimationFrame(() => {
         el.scrollLeft = 0;
-        setSnapReady(true);
+        raf2 = requestAnimationFrame(() => {
+          el.scrollLeft = 0;
+          setSnapReady(true);
+          // 2) and remount the track to defeat any persisted position
+          bump(); // <— NEW: force a remount of the scroller node
+        });
       });
-    });
-  };
+    };
 
-  // 1) when track becomes visible
-  const io = new IntersectionObserver(([entry]) => {
-    if (entry.isIntersecting) hardReset();
-  }, { threshold: 0.1 });
-  io.observe(el);
+    // when visible
+    const io = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) hardReset();
+    }, { threshold: 0.1 });
+    io.observe(el);
 
-  // 2) on resize (layout can change card width)
-  const ro = new ResizeObserver(hardReset);
-  ro.observe(el);
+    // on resize
+    const ro = new ResizeObserver(hardReset);
+    ro.observe(el);
 
-  // 3) also on window load (covers BFCache/back nav)
-  const onLoad = () => hardReset();
-  window.addEventListener('load', onLoad);
+    // page load / bfcache
+    const onLoad = () => hardReset();
+    window.addEventListener('load', onLoad);
 
-  return () => {
-    io.disconnect();
-    ro.disconnect();
-    window.removeEventListener('load', onLoad);
-    cancelAnimationFrame(raf1);
-    cancelAnimationFrame(raf2);
-  };
-}, []);
+    return () => {
+      io.disconnect();
+      ro.disconnect();
+      window.removeEventListener('load', onLoad);
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+    };
+  }, []);
 
   const scrollBy = (dir: number) => {
     const el = trackRef.current;
@@ -173,8 +176,8 @@ useEffect(() => {
     <div className="reels-container">
       <button className="reel-arrow left" aria-label="previous reels" onClick={() => scrollBy(-1)}>‹</button>
 
-      {/* Force LTR so "start" is the left edge even on RTL pages */}
       <div
+        key={resetKey}                               // <— NEW: remount on reset
         className={`reels-track ${snapReady ? "" : "no-snap"}`}
         ref={trackRef}
         dir="ltr"
@@ -190,7 +193,6 @@ useEffect(() => {
                 allowFullScreen
               />
             </div>
-            {/* keep text RTL so Hebrew looks right */}
             <div className="reel-meta" dir="rtl">
               <h4>{p.title}</h4>
               <p>{p.secondaryTitle}</p>
@@ -1342,6 +1344,7 @@ const App = () => {
   overscroll-behavior-inline: contain;
   scroll-padding-left: 0;
 }
+
 .reels-track.no-snap { scroll-snap-type: none !important; }
 
 .reels-track::-webkit-scrollbar { height: 8px; }
@@ -1402,6 +1405,8 @@ const App = () => {
 .reel-arrow:hover { background: rgba(255,255,255,0.1); }
 .reel-arrow.left  { left: 6px; }
 .reel-arrow.right { right: 6px; }
+
+  .reels-track { scrollbar-gutter: stable both-edges; }
 
 /* ---------- Responsive ---------- */
 @media (max-width: 1024px) {
