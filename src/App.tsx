@@ -395,7 +395,7 @@ const App = () => {
               <h1 className="hero-title">
                 <span className="title-line">Video Editor</span>
                 <span className="title-line accent">&</span>
-                <span className="title-line">Color Grader</span>
+                <span className="title-line">Producer</span>
               </h1>
               <p className="hero-subtitle">
                 Transforming visions into cinematic reality
