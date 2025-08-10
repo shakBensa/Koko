@@ -1321,8 +1321,18 @@ const App = () => {
         }
 
 /* ---------- Reels (clean, FLEX) ---------- */
-.reels-section { background: var(--dark-bg); }
-
+.reels-section {
+  background: var(--dark-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  /* optional, so the header can't get clipped */
+  overflow: visible;
+}
+  .reels-section .section-content {
+  padding-top: 0;
+}
 /* outer container matches page width and centers nicely */
 .reels-container {
   position: relative;
