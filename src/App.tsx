@@ -1234,6 +1234,7 @@ const App = () => {
 
 .contact-subtitle {
   text-align: center;
+  margin-bottom: 40px;
 }
 
 .contact-form {
