@@ -119,6 +119,47 @@ const ReelsCarousel = ({
       requestAnimationFrame(() => setSnapReady(true));
     });
   }, [items.length]);
+useEffect(() => {
+  const el = trackRef.current;
+  if (!el) return;
+
+  let raf1 = 0, raf2 = 0;
+
+  const hardReset = () => {
+    // temporarily disable snap
+    setSnapReady(false);
+    raf1 = requestAnimationFrame(() => {
+      el.scrollLeft = 0;
+      // do it twice in case browser restores after first frame
+      raf2 = requestAnimationFrame(() => {
+        el.scrollLeft = 0;
+        setSnapReady(true);
+      });
+    });
+  };
+
+  // 1) when track becomes visible
+  const io = new IntersectionObserver(([entry]) => {
+    if (entry.isIntersecting) hardReset();
+  }, { threshold: 0.1 });
+  io.observe(el);
+
+  // 2) on resize (layout can change card width)
+  const ro = new ResizeObserver(hardReset);
+  ro.observe(el);
+
+  // 3) also on window load (covers BFCache/back nav)
+  const onLoad = () => hardReset();
+  window.addEventListener('load', onLoad);
+
+  return () => {
+    io.disconnect();
+    ro.disconnect();
+    window.removeEventListener('load', onLoad);
+    cancelAnimationFrame(raf1);
+    cancelAnimationFrame(raf2);
+  };
+}, []);
 
   const scrollBy = (dir: number) => {
     const el = trackRef.current;
@@ -1338,6 +1379,7 @@ const App = () => {
   width: 100%;
   height: 100%;
 }
+.reels-track { scrollbar-gutter: stable both-edges; }
 
 .reel-meta { padding: 12px 14px 16px; }
 .reel-meta h4 { font-size: 16px; margin-bottom: 6px; }
