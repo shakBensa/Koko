@@ -14,7 +14,7 @@ interface Project {
 // Import your actual projects data
 import projects from "./projects.json";
 
-// Component to animate section titles
+// Component to animate section titles (unchanged)
 const AnimatedTitle = ({ children }: { children: string }) => {
   const [isVisible, setIsVisible] = useState(false);
   const titleRef = useRef<HTMLHeadingElement>(null);
@@ -29,25 +29,17 @@ const AnimatedTitle = ({ children }: { children: string }) => {
       { threshold: 0.1 }
     );
 
-    if (titleRef.current) {
-      observer.observe(titleRef.current);
-    }
-
+    if (titleRef.current) observer.observe(titleRef.current);
     return () => {
-      if (titleRef.current) {
-        observer.unobserve(titleRef.current);
-      }
+      if (titleRef.current) observer.unobserve(titleRef.current);
     };
   }, [isVisible]);
 
   return (
-    <h2 ref={titleRef} className={`section-title ${isVisible ? 'animate' : ''}`}>
-      {children.split('').map((letter, index) => (
-        <span
-          key={index}
-          style={{ animationDelay: `${index * 0.03}s` }}
-        >
-          {letter === ' ' ? '\u00A0' : letter}
+    <h2 ref={titleRef} className={`section-title ${isVisible ? "animate" : ""}`}>
+      {children.split("").map((letter, index) => (
+        <span key={index} style={{ animationDelay: `${index * 0.03}s` }}>
+          {letter === " " ? "\u00A0" : letter}
         </span>
       ))}
     </h2>
@@ -70,7 +62,7 @@ const SOCIAL_ORDER = [
 ];
 
 const orderIndex = (title: string, list: string[]) => {
-  const i = list.findIndex(t => t === title);
+  const i = list.findIndex((t) => t === title);
   return i === -1 ? Number.MAX_SAFE_INTEGER : i;
 };
 
@@ -78,17 +70,14 @@ const orderIndex = (title: string, list: string[]) => {
 const toEmbedUrl = (url: string) => {
   try {
     const u = new URL(url);
-    // shorts
     if (u.hostname.includes("youtube.com") && u.pathname.startsWith("/shorts/")) {
       const id = u.pathname.split("/shorts/")[1].split("/")[0];
       return `https://www.youtube.com/embed/${id}`;
     }
-    // youtu.be
     if (u.hostname === "youtu.be") {
       const id = u.pathname.slice(1);
       return `https://www.youtube.com/embed/${id}`;
     }
-    // watch?v=
     const v = u.searchParams.get("v");
     if (v) return `https://www.youtube.com/embed/${v}`;
     return url;
@@ -106,11 +95,10 @@ const ReelsCarousel = ({
 }) => {
   const trackRef = useRef<HTMLDivElement>(null);
   const [snapReady, setSnapReady] = useState(false);
-  const [resetKey, setResetKey] = useState(0); // <— NEW
+  const [resetKey, setResetKey] = useState(0);
 
-  const bump = () => setResetKey((k) => k + 1); // <— NEW
+  const bump = () => setResetKey((k) => k + 1);
 
-  // Always start at the first card (fixes initial right-shift)
   useLayoutEffect(() => {
     const el = trackRef.current;
     if (!el) return;
@@ -119,46 +107,42 @@ const ReelsCarousel = ({
       el.scrollLeft = 0;
       requestAnimationFrame(() => setSnapReady(true));
     });
-  }, [items.length, resetKey]); // <— depend on resetKey too
+  }, [items.length, resetKey]);
 
   useEffect(() => {
     const el = trackRef.current;
     if (!el) return;
 
-    let raf1 = 0, raf2 = 0;
+    let raf1 = 0,
+      raf2 = 0;
 
     const hardReset = () => {
       setSnapReady(false);
-      // 1) zero twice
       raf1 = requestAnimationFrame(() => {
         el.scrollLeft = 0;
         raf2 = requestAnimationFrame(() => {
           el.scrollLeft = 0;
           setSnapReady(true);
-          // 2) and remount the track to defeat any persisted position
-          bump(); // <— NEW: force a remount of the scroller node
+          bump();
         });
       });
     };
 
-    // when visible
     const io = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) hardReset();
     }, { threshold: 0.1 });
     io.observe(el);
 
-    // on resize
     const ro = new ResizeObserver(hardReset);
     ro.observe(el);
 
-    // page load / bfcache
     const onLoad = () => hardReset();
-    window.addEventListener('load', onLoad);
+    window.addEventListener("load", onLoad);
 
     return () => {
       io.disconnect();
       ro.disconnect();
-      window.removeEventListener('load', onLoad);
+      window.removeEventListener("load", onLoad);
       cancelAnimationFrame(raf1);
       cancelAnimationFrame(raf2);
     };
@@ -174,14 +158,11 @@ const ReelsCarousel = ({
 
   return (
     <div className="reels-container">
-      <button className="reel-arrow left" aria-label="previous reels" onClick={() => scrollBy(-1)}>‹</button>
+      <button className="reel-arrow left" aria-label="previous reels" onClick={() => scrollBy(-1)}>
+        ‹
+      </button>
 
-      <div
-        key={resetKey}                               // <— NEW: remount on reset
-        className={`reels-track ${snapReady ? "" : "no-snap"}`}
-        ref={trackRef}
-        dir="ltr"
-      >
+      <div key={resetKey} className={`reels-track ${snapReady ? "" : "no-snap"}`} ref={trackRef} dir="ltr">
         {items.map((p) => (
           <div key={p.id} className="reel-card" onClick={() => onOpen(p)}>
             <div className="reel-video">
@@ -201,12 +182,12 @@ const ReelsCarousel = ({
         ))}
       </div>
 
-      <button className="reel-arrow right" aria-label="next reels" onClick={() => scrollBy(1)}>›</button>
+      <button className="reel-arrow right" aria-label="next reels" onClick={() => scrollBy(1)}>
+        ›
+      </button>
     </div>
   );
 };
-
-
 
 const App = () => {
   const [activeSection, setActiveSection] = useState("home");
@@ -215,19 +196,22 @@ const App = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<"all" | "colorGrading" | "videoEditing">("all");
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    message: ''
-  });
+  const [formData, setFormData] = useState({ name: "", email: "", message: "" });
 
   const homeRef = useRef<HTMLDivElement>(null);
   const projectsRef = useRef<HTMLDivElement>(null);
   const aboutRef = useRef<HTMLDivElement>(null);
   const contactRef = useRef<HTMLDivElement>(null);
 
+  // HERO: showreel + controls
+  const SHOWREEL_ID = "FMtpnUR3MgM";
+  const SHOWREEL_EMBED =
+    `https://www.youtube.com/embed/${SHOWREEL_ID}` +
+    `?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&playsinline=1&loop=1&playlist=${SHOWREEL_ID}&enablejsapi=1`;
+  const [showHeroText, setShowHeroText] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
+
   useEffect(() => {
-    // Simulate loading
     const t = setTimeout(() => setIsLoading(false), 800);
     return () => clearTimeout(t);
   }, []);
@@ -254,7 +238,7 @@ const App = () => {
         { ref: homeRef, id: "home" },
         { ref: projectsRef, id: "projects" },
         { ref: aboutRef, id: "about" },
-        { ref: contactRef, id: "contact" },
+        { ref: contactRef, id: "contact" }
       ];
 
       for (const section of sections) {
@@ -262,11 +246,7 @@ const App = () => {
           const element = section.ref.current;
           const offsetTop = element.offsetTop;
           const height = element.offsetHeight;
-
-          if (
-            scrollPosition >= offsetTop &&
-            scrollPosition < offsetTop + height
-          ) {
+          if (scrollPosition >= offsetTop && scrollPosition < offsetTop + height) {
             setActiveSection(section.id);
             break;
           }
@@ -288,48 +268,49 @@ const App = () => {
     setCurrentProject(null);
   };
 
-  // Close modal or mobile menu on ESC
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         if (isModalOpen) closeModal();
         if (isMenuOpen) setIsMenuOpen(false);
       }
     };
-    window.addEventListener('keydown', handleEscape);
-    return () => window.removeEventListener('keydown', handleEscape);
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
   }, [isModalOpen, isMenuOpen]);
 
-  // Lock body scroll when modal or menu is open
   useEffect(() => {
-    document.body.style.overflow = (isModalOpen || isMenuOpen) ? 'hidden' : 'auto';
-    return () => { document.body.style.overflow = 'auto'; };
+    document.body.style.overflow = isModalOpen || isMenuOpen ? "hidden" : "auto";
+    return () => {
+      document.body.style.overflow = "auto";
+    };
   }, [isModalOpen, isMenuOpen]);
 
   const handleFormSubmit = () => {
-    const subject = encodeURIComponent('New Project Inquiry');
-    const body = encodeURIComponent(`Name: ${formData.name}\nEmail: ${formData.email}\n\nMessage:\n${formData.message}`);
+    const subject = encodeURIComponent("New Project Inquiry");
+    const body = encodeURIComponent(
+      `Name: ${formData.name}\nEmail: ${formData.email}\n\nMessage:\n${formData.message}`
+    );
     window.location.href = `mailto:koraldayancohen@gmail.com?subject=${subject}&body=${body}`;
-
-    setFormData({ name: '', email: '', message: '' });
+    setFormData({ name: "", email: "", message: "" });
   };
 
   /** --------------------- סינון והפרדה --------------------- */
   const all: Project[] = projects.data as Project[];
 
   const standardProjects = all
-    .filter(p =>
+    .filter((p) =>
       activeFilter === "all"
         ? true
         : activeFilter === "colorGrading"
-          ? p.type === "colorGrading" || p.type === "both"
-          : p.type === "videoEditing" || p.type === "both"
+        ? p.type === "colorGrading" || p.type === "both"
+        : p.type === "videoEditing" || p.type === "both"
     )
-    .filter(p => (p.format ?? "standard") !== "reel")
+    .filter((p) => (p.format ?? "standard") !== "reel")
     .sort((a, b) => orderIndex(a.title, ORDER) - orderIndex(b.title, ORDER));
 
   const reelProjects = all
-    .filter(p => (p.format ?? "standard") === "reel")
+    .filter((p) => (p.format ?? "standard") === "reel")
     .sort((a, b) => orderIndex(a.title, SOCIAL_ORDER) - orderIndex(b.title, SOCIAL_ORDER));
 
   if (isLoading) {
@@ -364,14 +345,11 @@ const App = () => {
             aria-controls="primary-navigation"
           >
             <span className={`hamburger ${isMenuOpen ? "open" : ""}`}></span>
-            <span className="sr-only">{isMenuOpen ? 'Close' : 'Open'} navigation</span>
+            <span className="sr-only">{isMenuOpen ? "Close" : "Open"} navigation</span>
           </button>
 
           <div id="primary-navigation" className={`nav-links ${isMenuOpen ? "mobile-open" : ""}`}>
-            <button
-              onClick={() => scrollToSection(homeRef, "home")}
-              className={activeSection === "home" ? "active" : ""}
-            >
+            <button onClick={() => scrollToSection(homeRef, "home")} className={activeSection === "home" ? "active" : ""}>
               Home
             </button>
             <button
@@ -380,10 +358,7 @@ const App = () => {
             >
               Projects
             </button>
-            <button
-              onClick={() => scrollToSection(aboutRef, "about")}
-              className={activeSection === "about" ? "active" : ""}
-            >
+            <button onClick={() => scrollToSection(aboutRef, "about")} className={activeSection === "about" ? "active" : ""}>
               About
             </button>
             <button
@@ -397,41 +372,81 @@ const App = () => {
       </nav>
 
       {/* Scrim for mobile menu */}
-      {isMenuOpen && (
-        <div
-          className="mobile-scrim"
-          aria-hidden
-          onClick={() => setIsMenuOpen(false)}
-        />
-      )}
+      {isMenuOpen && <div className="mobile-scrim" aria-hidden onClick={() => setIsMenuOpen(false)} />}
 
       <main>
+        {/* ===================== HERO ===================== */}
         <section ref={homeRef} className="section hero-section">
-          <div className="hero-background"></div>
-          <div className="section-content hero-content">
-            <div className="hero-text">
-              <h1 className="hero-title">
-                <span className="title-line">Video Editor</span>
-                <span className="title-line accent">&</span>
-                <span className="title-line">Producer</span>
-              </h1>
-              <p className="hero-subtitle">
-                Transforming visions into cinematic reality
-              </p>
-              <button
-                className="cta-button"
-                onClick={() => scrollToSection(projectsRef, "projects")}
-              >
-                View My Work
-              </button>
+          {/* kill the old animated background to keep the video clean */}
+          <div className="hero-background" aria-hidden></div>
+
+          {/* full-bleed video behind everything */}
+          <div className="hero-video-wrapper" aria-hidden>
+            <div className="hero-hover-scrim" aria-hidden></div>
+            <iframe
+              id="showreel-iframe"
+              src={SHOWREEL_EMBED}
+              title="Koral Dayan Cohen — Showreel"
+              frameBorder={0}
+              allow="autoplay; fullscreen; clipboard-write; encrypted-media; picture-in-picture; web-share"
+              allowFullScreen
+              tabIndex={-1}
+            />
+          </div>
+
+          {/* text wrapper — shows on hover (desktop) or toggle (mobile) */}
+          <div className={`hero-visibility ${showHeroText ? "open" : ""}`}>
+            <div className="section-content hero-content hero-align-left">
+              <div className="hero-text hero-left-text">
+                {/* Use the same animated title style to match the site */}
+                <AnimatedTitle>Video Editor & Producer</AnimatedTitle>
+                <p className="hero-subtitle">Transforming visions into cinematic reality</p>
+                <button className="cta-button" onClick={() => scrollToSection(projectsRef, "projects")}>
+                  View My Work
+                </button>
+              </div>
             </div>
           </div>
+
+          {/* Mobile info toggle (no hover) */}
+          <button
+            className="hero-info-toggle"
+            onClick={() => setShowHeroText((v) => !v)}
+            aria-pressed={showHeroText}
+            aria-label={showHeroText ? "Hide hero text" : "Show hero text"}
+            title={showHeroText ? "Hide" : "Show"}
+          >
+            {showHeroText ? "×" : "i"}
+          </button>
+
+          {/* Audio toggle (mute/unmute YouTube) */}
+          <button
+            className="hero-audio-toggle"
+            onClick={() => {
+              const iframe = document.getElementById("showreel-iframe") as HTMLIFrameElement | null;
+              const win = iframe?.contentWindow;
+              if (!win) return;
+              win.postMessage(JSON.stringify({ event: "command", func: isMuted ? "unMute" : "mute", args: [] }), "*");
+              if (isMuted) {
+                win.postMessage(JSON.stringify({ event: "command", func: "setVolume", args: [100] }), "*");
+                win.postMessage(JSON.stringify({ event: "command", func: "playVideo", args: [] }), "*");
+              }
+              setIsMuted((m) => !m);
+            }}
+            aria-pressed={!isMuted}
+            aria-label={isMuted ? "Unmute video" : "Mute video"}
+            title={isMuted ? "Unmute" : "Mute"}
+          >
+            {isMuted ? "🔇" : "🔊"}
+          </button>
+
+          {/* scroll hint */}
           <div className="scroll-indicator">
             <div className="mouse"></div>
           </div>
         </section>
 
-        {/* Featured Projects (Standard) */}
+        {/* ===================== PROJECTS ===================== */}
         <section ref={projectsRef} className="section projects-section">
           <div className="section-header">
             <AnimatedTitle>Featured Projects</AnimatedTitle>
@@ -502,7 +517,7 @@ const App = () => {
           </div>
         </section>
 
-        {/* Reels & Social Carousel */}
+        {/* ===================== REELS ===================== */}
         <section className="section reels-section">
           <div className="section-header">
             <AnimatedTitle>Reels & Social</AnimatedTitle>
@@ -512,7 +527,7 @@ const App = () => {
           </div>
         </section>
 
-        {/* About */}
+        {/* ===================== ABOUT ===================== */}
         <section ref={aboutRef} className="section about-section">
           <div className="section-content about-content">
             <div className="about-container">
@@ -520,22 +535,17 @@ const App = () => {
               <div className="about-grid">
                 <div className="about-text">
                   <p className="lead-text">
-                    I'm Koral Dayan Cohen, a passionate video editor, director,
-                    colorist, and producer.
+                    I'm Koral Dayan Cohen, a passionate video editor, director, colorist, and producer.
                   </p>
                   <p>
-                    I specialize in crafting compelling stories from concept to
-                    completion, balancing both creative vision and technical
-                    excellence. With meticulous attention to detail and a deep
-                    commitment to narrative, I bring each frame to life, turning
-                    raw footage into powerful, engaging content.
+                    I specialize in crafting compelling stories from concept to completion, balancing both creative
+                    vision and technical excellence. With meticulous attention to detail and a deep commitment to
+                    narrative, I bring each frame to life, turning raw footage into powerful, engaging content.
                   </p>
                   <p>
-                    My experience spans diverse projects—including
-                    documentaries, narrative films, and beyond. I firmly believe
-                    in the emotional power of video storytelling, and I'm
-                    dedicated to creating content that resonates deeply with
-                    audiences.
+                    My experience spans diverse projects—including documentaries, narrative films, and beyond. I firmly
+                    believe in the emotional power of video storytelling, and I'm dedicated to creating content that
+                    resonates deeply with audiences.
                   </p>
                   <div className="skills-list">
                     <div className="skill-item">
@@ -575,14 +585,12 @@ const App = () => {
           </div>
         </section>
 
-        {/* Contact */}
+        {/* ===================== CONTACT ===================== */}
         <section ref={contactRef} className="section contact-section">
           <div className="section-content">
             <div className="contact-container">
               <AnimatedTitle>Let's Work Together</AnimatedTitle>
-              <p className="contact-subtitle">
-                Have a project in mind? I'd love to hear about it.
-              </p>
+              <p className="contact-subtitle">Have a project in mind? I'd love to hear about it.</p>
 
               <div className="contact-form">
                 <div className="form-group">
@@ -590,9 +598,7 @@ const App = () => {
                     type="text"
                     placeholder="Your Name"
                     value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     className="form-input"
                   />
                 </div>
@@ -601,9 +607,7 @@ const App = () => {
                     type="email"
                     placeholder="Your Email"
                     value={formData.email}
-                    onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     className="form-input"
                   />
                 </div>
@@ -612,18 +616,14 @@ const App = () => {
                     placeholder="Tell me about your project"
                     rows={6}
                     value={formData.message}
-                    onChange={(e) =>
-                      setFormData({ ...formData, message: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                     className="form-input"
                   ></textarea>
                 </div>
                 <button
                   onClick={handleFormSubmit}
                   className="submit-button"
-                  disabled={
-                    !formData.name || !formData.email || !formData.message
-                  }
+                  disabled={!formData.name || !formData.email || !formData.message}
                 >
                   Send Message
                 </button>
@@ -631,10 +631,7 @@ const App = () => {
 
               <div className="contact-alternatives">
                 <p>Or reach out directly:</p>
-                <a
-                  href="mailto:koraldayancohen@gmail.com"
-                  className="email-link"
-                >
+                <a href="mailto:koraldayancohen@gmail.com" className="email-link">
                   koraldayancohen@gmail.com
                 </a>
               </div>
@@ -648,12 +645,7 @@ const App = () => {
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close" onClick={closeModal} aria-label="Close">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
-                <path
-                  d="M18 6L6 18M6 6l12 12"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
+                <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
               </svg>
             </button>
             <h3 className="modal-title">{currentProject.title}</h3>
@@ -674,11 +666,7 @@ const App = () => {
       )}
 
       <style>{`
-        * {
-          margin: 0;
-          padding: 0;
-          box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         :root {
           --primary-color: #ffffff;
@@ -705,320 +693,178 @@ const App = () => {
           line-height: 1.6;
         }
 
-        main {
-          width: 100vw;
-          overflow-x: hidden;
-        }
+        main { width: 100vw; overflow-x: hidden; }
 
         /* Loading Screen */
         .loading-screen {
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100vh;
-          background: var(--dark-bg);
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          z-index: 9999;
+          position: fixed; top: 0; left: 0; width: 100%; height: 100vh;
+          background: var(--dark-bg); display: flex; justify-content: center; align-items: center; z-index: 9999;
         }
-
         .loader {
-          width: 50px;
-          height: 50px;
-          border: 3px solid var(--border-color);
-          border-top-color: var(--accent-color);
-          border-radius: 50%;
-          animation: spin 1s linear infinite;
+          width: 50px; height: 50px; border: 3px solid var(--border-color);
+          border-top-color: var(--accent-color); border-radius: 50%; animation: spin 1s linear infinite;
         }
-
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
         /* Navbar */
-    .navbar {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
+        .navbar {
+          position: fixed; top: 0; left: 0; right: 0;
           background: rgba(10, 10, 10, 0.85);
-          backdrop-filter: blur(20px);
-          -webkit-backdrop-filter: blur(20px);
+          backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
           border-bottom: 1px solid var(--border-color);
-          z-index: 1002;
-          height: 80px;
-          transition: var(--transition);
+          z-index: 1002; height: 80px; transition: var(--transition);
         }
-        
         .nav-content {
-          max-width: 1400px;
-          margin: 0 auto;
-          padding: 0 40px;
-          height: 100%;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
+          max-width: 1400px; margin: 0 auto; padding: 0 40px; height: 100%;
+          display: flex; justify-content: space-between; align-items: center;
         }
+        .logo-container { display: flex; align-items: center; }
 
-        .logo-container {
-          display: flex;
-          align-items: center;
-        }
-
-        .nav-links {
-          display: flex;
-          gap: 40px;
-          align-items: center;
-        }
-
+        .nav-links { display: flex; gap: 40px; align-items: center; }
         .nav-links button {
-          background: none;
-          border: none;
-          color: var(--text-secondary);
-          cursor: pointer;
-          font-size: 16px;
-          font-weight: 500;
-          transition: var(--transition);
-          position: relative;
-          padding: 8px 0;
+          background: none; border: none; color: var(--text-secondary);
+          cursor: pointer; font-size: 16px; font-weight: 500; transition: var(--transition); position: relative; padding: 8px 0;
         }
-
         .nav-links button::after {
-          content: '';
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          width: 0;
-          height: 2px;
-          background: var(--accent-color);
-          transition: width 0.3s ease;
+          content: ''; position: absolute; bottom: 0; left: 0; width: 0; height: 2px; background: var(--accent-color); transition: width 0.3s ease;
         }
+        .nav-links button:hover { color: var(--text-primary); }
+        .nav-links button.active { color: var(--text-primary); }
+        .nav-links button.active::after { width: 100%; }
 
-        .nav-links button:hover {
-          color: var(--text-primary);
-        }
-
-        .nav-links button.active {
-          color: var(--text-primary);
-        }
-
-        .nav-links button.active::after {
-          width: 100%;
-        }
-
-        .mobile-menu-toggle {
-          display: none;
-          background: none;
-          border: none;
-          cursor: pointer;
-          padding: 10px;
-          position: relative;
-          z-index: 1002;
-        }
-
-        .hamburger {
-          display: block;
-          width: 25px;
-          height: 2px;
-          background: var(--text-primary);
-          position: relative;
-          transition: var(--transition);
-        }
-
-        .hamburger::before,
-        .hamburger::after {
-          content: '';
-          position: absolute;
-          width: 100%;
-          height: 100%;
-          background: var(--text-primary);
-          transition: var(--transition);
-        }
-
+        .mobile-menu-toggle { display: none; background: none; border: none; cursor: pointer; padding: 10px; position: relative; z-index: 1002; }
+        .hamburger { display: block; width: 25px; height: 2px; background: var(--text-primary); position: relative; transition: var(--transition); }
+        .hamburger::before, .hamburger::after { content: ''; position: absolute; width: 100%; height: 100%; background: var(--text-primary); transition: var(--transition); }
         .hamburger::before { top: -8px; }
         .hamburger::after { bottom: -8px; }
-
         .hamburger.open { background: transparent; }
         .hamburger.open::before { top: 0; transform: rotate(45deg); }
         .hamburger.open::after { bottom: 0; transform: rotate(-45deg); }
 
-        /* Hero Section */
+        /* ===== HERO (no dark overlay) ===== */
         .hero-section {
-          position: relative;
-          min-height: 100vh;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          overflow: hidden;
+          position: relative; min-height: 100vh;
+          display: flex; align-items: center; justify-content: center; overflow: hidden;
+        }
+        /* Remove the old animated radial background entirely */
+        .hero-background { display: none; }
+
+        /* Full-bleed video */
+        .hero-video-wrapper { position: absolute; inset: 0; overflow: hidden; z-index: 0; }
+        .hero-video-wrapper iframe {
+          position: absolute; top: 50%; left: 50%;
+          width: 120vw; height: 120vh; transform: translate(-50%, -50%);
+          pointer-events: none; background: #000;
         }
 
-        .hero-background {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background: radial-gradient(ellipse at center, rgba(255, 107, 107, 0.1) 0%, transparent 70%);
-          animation: pulse 4s ease-in-out infinite;
+        /* Text visibility (no scrim) */
+        .hero-visibility { position: relative; z-index: 2; opacity: 0; transition: opacity .3s ease; }
+        @media (hover: hover) and (pointer: fine) {
+          .hero-section:hover .hero-visibility { opacity: 1; }
+        }
+        @media (hover: none) {
+          .hero-visibility { opacity: 0; }
+          .hero-visibility.open { opacity: 1; }
         }
 
-        @keyframes pulse {
-          0%, 100% { opacity: 0.5; }
-          50% { opacity: 1; }
+        /* Left alignment so we don't cover the middle of the frame */
+        .hero-content.hero-align-left {
+          display: flex; justify-content: flex-start; align-items: center; text-align: left;
         }
+        .hero-left-text { max-width: 720px; }
+        /* Hover-only scrim for desktop: invisible by default */
+.hero-hover-scrim {
+  position: absolute;
+  inset: 0;
+  /* gentle top-to-bottom gradient; tweak strength as you like */
+  background: linear-gradient(
+    to bottom,
+    rgba(10,10,10,0.30) 60%,
+    rgba(10,10,10,0.40) 80%,
+    rgba(10,10,10,0.60) 100%
+  );
+  opacity: 0;
+  transition: opacity .25s ease;
+  pointer-events: none; /* never blocks clicks */
+  z-index: 1; /* sits above the video, below text */
+}
 
-        .hero-content {
-          text-align: center;
-          z-index: 1;
-          max-width: 1000px;
-          padding: 0 20px;
-        }
+/* Only on devices with hover (desktop/laptop) */
+@media (hover: hover) and (pointer: fine) {
+  .hero-section:hover .hero-hover-scrim { opacity: 1; } /* try 0.7 if you want stronger */
+}
+ /* Push hero content down below the toolbar */
+.hero-section {
+  margin-top: 80px; /* same as toolbar height */
+}
 
-        .hero-title {
-          font-size: clamp(3rem, 8vw, 6rem);
-          font-weight: 900;
-          line-height: 1;
-          margin-bottom: 30px;
-          animation: fadeInUp 1s ease-out;
-        }
+/* Or use padding if you want background/video to fill under it but text to start lower */
+.hero-section {
+  padding-top: 80px; /* same as toolbar height */
+  box-sizing: border-box;
+}
 
+        /* Reuse your hero title/subtitle styles */
+        .hero-content { text-align: center; z-index: 2; max-width: 1000px; padding: 0 20px; }
+        .hero-title { font-size: clamp(3rem, 8vw, 6rem); font-weight: 900; line-height: 1; margin-bottom: 30px; animation: fadeInUp 1s ease-out; }
         .title-line { display: block; margin: 10px 0; }
         .title-line.accent { color: var(--accent-color); font-size: 0.8em; }
-
-        @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(30px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
-        .hero-subtitle {
-          font-size: clamp(1.2rem, 3vw, 1.8rem);
-          color: var(--text-secondary);
-          margin-bottom: 40px;
-          animation: fadeInUp 1s ease-out 0.2s both;
-        }
-
+        .hero-subtitle { font-size: clamp(1.2rem, 3vw, 1.8rem); color: white; margin-bottom: 40px; animation: fadeInUp 1s ease-out 0.2s both; }
         .cta-button {
-          display: inline-block;
-          padding: 16px 40px;
-          background: var(--accent-color);
-          color: white;
-          text-decoration: none;
-          font-weight: 600;
-          font-size: 18px;
-          border-radius: 50px;
-          transition: var(--transition);
-          animation: fadeInUp 1s ease-out 0.4s both;
-          border: none;
-          cursor: pointer;
-          transform: translateZ(0);
+          display: inline-block; padding: 16px 40px; background: var(--accent-color); color: white; text-decoration: none;
+          font-weight: 600; font-size: 18px; border-radius: 50px; transition: var(--transition); animation: fadeInUp 1s ease-out 0.4s both;
+          border: none; cursor: pointer; transform: translateZ(0);
         }
+        .cta-button:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(255, 107, 107, 0.3); }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 
-        .cta-button:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 10px 30px rgba(255, 107, 107, 0.3);
+        /* Buttons (audio/info) */
+        .hero-info-toggle, .hero-audio-toggle {
+          position: absolute; z-index: 1200;
+          width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center;
+          border-radius: 999px; border: 1px solid var(--border-color);
+          background: rgba(255,255,255,0.06); color: var(--text-primary);
+          font-size: 18px; transition: var(--transition);
         }
+        .hero-info-toggle:hover, .hero-audio-toggle:hover { background: rgba(255,255,255,0.12); }
+        .hero-audio-toggle { top: calc(80px + 16px); right: 16px; } /* below navbar, above it in stacking */
+        .hero-info-toggle  { bottom: 16px; right: 16px; display: none; }
+        @media (hover: none) { .hero-info-toggle { display: inline-flex; } .hero-left-text { max-width: 90vw; } }
 
         .scroll-indicator {
-          position: absolute;
-          bottom: 40px;
-          left: 50%;
-          transform: translateX(-50%);
-          animation: bounce 2s infinite;
+          position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); animation: bounce 2s infinite;
         }
-
-        .mouse {
-          width: 30px;
-          height: 50px;
-          border: 2px solid var(--text-secondary);
-          border-radius: 25px;
-          position: relative;
-        }
-
+        .mouse { width: 30px; height: 50px; border: 2px solid var(--text-secondary); border-radius: 25px; position: relative; }
         .mouse::after {
-          content: '';
-          position: absolute;
-          top: 8px;
-          left: 50%;
-          transform: translateX(-50%);
-          width: 4px;
-          height: 10px;
-          background: var(--text-secondary);
-          border-radius: 2px;
-          animation: scroll 2s infinite;
+          content: ''; position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+          width: 4px; height: 10px; background: var(--text-secondary); border-radius: 2px; animation: scroll 2s infinite;
         }
-
         @keyframes bounce {
           0%, 20%, 50%, 80%, 100% { transform: translateX(-50%) translateY(0); }
           40% { transform: translateX(-50%) translateY(-10px); }
           60% { transform: translateX(-50%) translateY(-5px); }
         }
+        @keyframes scroll { 0% { opacity: 1; transform: translateX(-50%) translateY(0); } 100% { opacity: 0; transform: translateX(-50%) translateY(20px); } }
 
-        @keyframes scroll {
-          0% { opacity: 1; transform: translateX(-50%) translateY(0); }
-          100% { opacity: 0; transform: translateX(-50%) translateY(20px); }
-        }
-
-        /* Section Styles */
-        .section {
-          min-height: 100vh;
-          position: relative;
-          overflow: hidden;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .section-content {
-          width: 100%;
-          padding: 100px 80px 60px;
-        }
+        /* Sections */
+        .section { min-height: 100vh; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        .section-content { width: 100%; padding: 100px 80px 60px; }
 
         .section-header {
-          max-width: 1400px;
-          margin: 0 auto;
-          padding: 100px 40px 40px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          flex-wrap: wrap;
-          gap: 20px;
+          max-width: 1400px; margin: 0 auto; padding: 100px 40px 40px;
+          display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;
         }
-
         .section-title {
-          font-size: clamp(2.5rem, 5vw, 4rem);
-          font-weight: 800;
-          margin-bottom: 20px;
-          position: relative;
-          display: inline-block;
-          text-align: left;
-          cursor: default;
+          font-size: clamp(2.5rem, 5vw, 4rem); font-weight: 800; margin-bottom: 20px; position: relative;
+          display: inline-block; text-align: left; cursor: default;
         }
-
         .section-title::after {
-          content: '';
-          position: absolute;
-          bottom: -10px;
-          left: 0;
-          width: 60px;
-          height: 4px;
-          background: var(--accent-color);
+          content: ''; position: absolute; bottom: -10px; left: 0; width: 60px; height: 4px; background: var(--accent-color);
           transition: width 0.8s ease 0.5s;
         }
-
         .section-title.animate::after { width: 100%; }
-
-        .section-title span {
-          display: inline-block;
-          position: relative;
-          transform-origin: bottom;
-          opacity: 0;
-          transform: translateY(20px);
-        }
-
+        .section-title span { display: inline-block; position: relative; transform-origin: bottom; opacity: 0; transform: translateY(20px); }
         .section-title.animate span { animation: letterDrop 0.6s ease forwards; }
-
         @keyframes letterDrop {
           0% { opacity: 0; transform: translateY(20px) rotateZ(-5deg); color: var(--text-primary); }
           50% { opacity: 1; transform: translateY(-5px) rotateZ(2deg); color: var(--accent-color); }
@@ -1027,514 +873,161 @@ const App = () => {
 
         /* Filter Buttons */
         .filter-buttons { display: flex; gap: 10px; }
-
         .filter-btn {
-          padding: 8px 20px;
-          background: transparent;
-          border: 1px solid var(--border-color);
-          color: var(--text-secondary);
-          border-radius: 25px;
-          cursor: pointer;
-          transition: var(--transition);
-          font-size: 14px;
-          font-weight: 500;
+          padding: 8px 20px; background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary);
+          border-radius: 25px; cursor: pointer; transition: var(--transition); font-size: 14px; font-weight: 500;
         }
-
-        .filter-btn:hover,
-        .filter-btn.active {
-          background: var(--accent-color);
-          border-color: var(--accent-color);
-          color: white;
-        }
+        .filter-btn:hover, .filter-btn.active { background: var(--accent-color); border-color: var(--accent-color); color: white; }
 
         /* Projects Section */
-        .projects-section {
-          background: var(--gray-bg);
-          height: 100vh;
-          width: 100vw;
-          display: flex;
-          flex-direction: column;
-          overflow: hidden;
-        }
-
-        .section-header {
-          width: 100%;
-          padding: 80px 80px 30px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          flex-wrap: wrap;
-          gap: 20px;
-          flex-shrink: 0;
-        }
-
-        .projects-scroll-container {
-          flex: 1;
-          overflow-y: auto;
-          padding: 0 80px 40px;
-          width: 100%;
-          scrollbar-width: thin;
-          scrollbar-color: #444 #222;
-        }
-
+        .projects-section { background: var(--gray-bg); height: 100vh; width: 100vw; display: flex; flex-direction: column; overflow: hidden; }
+        .section-header { width: 100%; padding: 80px 80px 30px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; flex-shrink: 0; }
+        .projects-scroll-container { flex: 1; overflow-y: auto; padding: 0 80px 40px; width: 100%; scrollbar-width: thin; scrollbar-color: #444 #222; }
         .projects-scroll-container::-webkit-scrollbar { width: 8px; }
         .projects-scroll-container::-webkit-scrollbar-track { background: #222; border-radius: 4px; }
         .projects-scroll-container::-webkit-scrollbar-thumb { background-color: #444; border-radius: 4px; }
         .projects-scroll-container::-webkit-scrollbar-thumb:hover { background-color: #555; }
 
-        .projects-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-          gap: 30px;
-          padding-bottom: 20px;
-          width: 100%;
-        }
-
+        .projects-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 30px; padding-bottom: 20px; width: 100%; }
         .project-card {
-          background: rgba(255, 255, 255, 0.03);
-          border-radius: 16px;
-          overflow: hidden;
-          cursor: pointer;
-          transition: var(--transition);
-          border: 1px solid var(--border-color);
-          animation: fadeInUp 0.6s ease-out both;
+          background: rgba(255, 255, 255, 0.03); border-radius: 16px; overflow: hidden; cursor: pointer; transition: var(--transition);
+          border: 1px solid var(--border-color); animation: fadeInUp 0.6s ease-out both;
         }
-
-        .project-card:hover {
-          transform: translateY(-10px);
-          border-color: rgba(255, 255, 255, 0.2);
-          box-shadow: var(--shadow);
-        }
-
-        .project-image {
-          width: 100%;
-          height: 250px;
-          overflow: hidden;
-          position: relative;
-        }
-
-        .project-thumbnail {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          display: block;
-          transition: transform 0.3s ease;
-        }
-
+        .project-card:hover { transform: translateY(-10px); border-color: rgba(255, 255, 255, 0.2); box-shadow: var(--shadow); }
+        .project-image { width: 100%; height: 250px; overflow: hidden; position: relative; }
+        .project-thumbnail { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.3s ease; }
         .project-card:hover .project-thumbnail { transform: scale(1.05); }
-
         .placeholder-image {
-          width: 100%;
-          height: 100%;
-          background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 18px;
-          color: var(--text-secondary);
+          width: 100%; height: 100%; background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+          display: flex; align-items: center; justify-content: center; font-size: 18px; color: var(--text-secondary);
         }
-
         .project-content { padding: 30px; }
-
         .project-title { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
-
         .project-subtitle { color: var(--text-secondary); margin-bottom: 20px; }
-
         .project-tags { display: flex; gap: 10px; flex-wrap: wrap; }
-
-        .tag {
-          padding: 6px 16px;
-          border-radius: 20px;
-          font-size: 12px;
-          font-weight: 600;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-
+        .tag { padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
         .tag.color-grading { background: rgba(216, 157, 157, 0.2); color: #d89d9d; }
         .tag.video-editing { background: rgba(127, 154, 235, 0.2); color: #7f9aeb; }
 
-/* About Section — mobile friendly */
-.about-section {
-  background: var(--dark-bg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+        /* About Section */
+        .about-section { background: var(--dark-bg); display: flex; align-items: center; justify-content: center; }
+        .about-content { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+        .about-container { max-width: 1200px; margin: 0 auto; }
+        .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: start; margin-top: 60px; }
+        .about-text { font-size: 18px; line-height: 1.8; }
+        .lead-text { font-size: 24px; font-weight: 600; margin-bottom: 30px; color: var(--text-primary); }
+        .about-text p { margin-bottom: 20px; color: var(--text-secondary); }
+        .skills-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-top: 40px; }
+        .skill-item {
+          display: flex; align-items: center; gap: 15px; padding: 20px; background: rgba(255, 255, 255, 0.03);
+          border-radius: 12px; border: 1px solid var(--border-color); transition: var(--transition);
+        }
+        .skill-item:hover { border-color: var(--accent-color); transform: translateX(5px); }
+        .skill-icon { font-size: 28px; }
+        .about-stats { display: grid; gap: 30px; grid-template-columns: 1fr; }
+        .stat-card {
+          padding: 40px; background: rgba(255, 255, 255, 0.03); border-radius: 16px; border: 1px solid var(--border-color);
+          text-align: center; transition: var(--transition);
+        }
+        .stat-card:hover { border-color: var(--accent-color); transform: translateY(-5px); }
+        .stat-card h3 { font-size: 48px; font-weight: 800; color: var(--accent-color); margin-bottom: 10px; }
+        .stat-card p { color: var(--text-secondary); font-size: 18px; }
 
-.about-content {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  /* don't force full viewport height on small screens */
-  min-height: 100vh;
-}
-
-.about-container { max-width: 1200px; margin: 0 auto; }
-
-.about-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 80px;
-  align-items: start;
-  margin-top: 60px;
-}
-
-.about-text { font-size: 18px; line-height: 1.8; }
-.lead-text { font-size: 24px; font-weight: 600; margin-bottom: 30px; color: var(--text-primary); }
-.about-text p { margin-bottom: 20px; color: var(--text-secondary); }
-
-.skills-list {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
-  margin-top: 40px;
-}
-
-.skill-item {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  padding: 20px;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 12px;
-  border: 1px solid var(--border-color);
-  transition: var(--transition);
-}
-.skill-item:hover { border-color: var(--accent-color); transform: translateX(5px); }
-.skill-icon { font-size: 28px; }
-
-.about-stats {
-  display: grid;
-  gap: 30px;
-  grid-template-columns: 1fr;
-}
-
-.stat-card {
-  padding: 40px;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 16px;
-  border: 1px solid var(--border-color);
-  text-align: center;
-  transition: var(--transition);
-}
-.stat-card:hover { border-color: var(--accent-color); transform: translateY(-5px); }
-.stat-card h3 { font-size: 48px; font-weight: 800; color: var(--accent-color); margin-bottom: 10px; }
-.stat-card p { color: var(--text-secondary); font-size: 18px; }
-
-/* Responsive tweaks just for About */
-@media (max-width: 1024px) {
-  .about-grid {
-    grid-template-columns: 1fr;
-    gap: 32px;
-  }
-  .about-content { min-height: auto; }
-  .skills-list { grid-template-columns: 1fr; }
-  .about-stats {
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  }
-}
-
-/* Contact — centered but keep original form styles */
-.contact-container {
-  width: 100%;
-  text-align: center;
-}
-
-.contact-container .section-title {
-  text-align: center;
-  margin-left: auto;
-  margin-right: auto;
-  display: inline-block;
-}
-.contact-container .section-title::after {
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.contact-subtitle {
-  text-align: center;
-  margin-bottom: 40px;
-}
-
-.contact-form {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  max-width: 700px;
-  margin: 0 auto; /* center the block */
-}
-
-/* keep the original form look */
-.form-input {
-  width: 100%;
-  padding: 20px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 2px solid var(--border-color);
-  border-radius: 12px;
-  color: var(--text-primary);
-  font-size: 16px;
-  transition: var(--transition);
-  font-family: inherit;
-}
-.form-input:focus {
-  outline: none;
-  border-color: var(--accent-color);
-  background: rgba(255, 255, 255, 0.05);
-}
-.form-input::placeholder {
-  color: var(--text-secondary);
-}
-textarea.form-input {
-  resize: vertical;
-  min-height: 150px;
-}
-
-.submit-button {
-  padding: 18px 40px;
-  background: var(--accent-color);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-size: 18px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: var(--transition);
-  margin-top: 20px;
-}
-.submit-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 30px rgba(255, 107, 107, 0.3);
-}
-.submit-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.contact-alternatives {
-  margin-top: 60px;
-  text-align: center;
-}
-
+        /* Contact */
+        .contact-container { width: 100%; text-align: center; }
+        .contact-container .section-title { text-align: center; margin-left: auto; margin-right: auto; display: inline-block; }
+        .contact-container .section-title::after { left: 50%; transform: translateX(-50%); }
+        .contact-subtitle { text-align: center; margin-bottom: 40px; }
+        .contact-form {
+          display: flex; flex-direction: column; gap: 20px; max-width: 700px; margin: 0 auto;
+        }
+        .form-input {
+          width: 100%; padding: 20px; background: rgba(255, 255, 255, 0.03); border: 2px solid var(--border-color);
+          border-radius: 12px; color: var(--text-primary); font-size: 16px; transition: var(--transition); font-family: inherit;
+        }
+        .form-input:focus { outline: none; border-color: var(--accent-color); background: rgba(255, 255, 255, 0.05); }
+        .form-input::placeholder { color: var(--text-secondary); }
+        textarea.form-input { resize: vertical; min-height: 150px; }
+        .submit-button {
+          padding: 18px 40px; background: var(--accent-color); color: white; border: none; border-radius: 12px;
+          font-size: 18px; font-weight: 600; cursor: pointer; transition: var(--transition); margin-top: 20px;
+        }
+        .submit-button:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(255, 107, 107, 0.3); }
+        .submit-button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .contact-alternatives { margin-top: 60px; text-align: center; }
 
         /* Modal */
         .modal-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background-color: rgba(0, 0, 0, 0.95);
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          z-index: 2000;
-          padding: 20px;
-          animation: fadeIn 0.3s ease-out;
+          position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+          background-color: rgba(0, 0, 0, 0.95); display: flex; justify-content: center; align-items: center;
+          z-index: 2000; padding: 20px; animation: fadeIn 0.3s ease-out;
         }
-
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
         .modal {
-          background-color: var(--gray-bg);
-          padding: 40px;
-          border-radius: 20px;
-          max-width: 90vw;
-          width: 1000px;
-          max-height: 90vh;
-          display: flex;
-          flex-direction: column;
-          position: relative;
-          animation: slideIn 0.3s ease-out;
+          background-color: var(--gray-bg); padding: 40px; border-radius: 20px; max-width: 90vw; width: 1000px; max-height: 90vh;
+          display: flex; flex-direction: column; position: relative; animation: slideIn 0.3s ease-out;
         }
-
-        @keyframes slideIn {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
+        @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .modal-close {
-          position: absolute;
-          top: 20px;
-          right: 20px;
-          background: none;
-          border: none;
-          color: var(--text-secondary);
-          cursor: pointer;
-          padding: 10px;
-          transition: var(--transition);
-          border-radius: 8px;
+          position: absolute; top: 20px; right: 20px; background: none; border: none; color: var(--text-secondary);
+          cursor: pointer; padding: 10px; transition: var(--transition); border-radius: 8px;
         }
-
         .modal-close:hover { color: var(--text-primary); background: rgba(255, 255, 255, 0.1); }
-
         .modal-title { font-size: 32px; margin-bottom: 10px; }
-
         .modal-subtitle { color: var(--text-secondary); margin-bottom: 30px; }
+        .video-container { width: 100%; padding-bottom: 56.25%; position: relative; background: #000; border-radius: 12px; overflow: hidden; }
+        .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
 
-        .video-container {
-          width: 100%;
-          padding-bottom: 56.25%;
-          position: relative;
-          background: #000;
-          border-radius: 12px;
-          overflow: hidden;
+        /* Reels */
+        .reels-section { background: var(--dark-bg); display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; overflow: visible; }
+        .reels-section .section-content { padding-top: 0; }
+        .reels-container { position: relative; width: 100%; max-width: none; margin: 0; padding: 0; }
+        .reels-track { display: flex; gap: 16px; overflow-x: auto; padding: 6px 0 12px; scroll-snap-type: x proximity; scrollbar-width: thin; scrollbar-color: #444 #222; direction: ltr; overscroll-behavior-inline: contain; scroll-padding-left: 0; }
+        .reels-track.no-snap { scroll-snap-type: none !important; }
+        .reels-track::-webkit-scrollbar { height: 8px; }
+        .reels-track::-webkit-scrollbar-track { background: #222; border-radius: 4px; }
+        .reels-track::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
+        .reels-track::-webkit-scrollbar-thumb:hover { background: #555; }
+        .reel-card { width: 280px; min-width: 280px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 16px; scroll-snap-align: start; cursor: pointer; transition: var(--transition); overflow: hidden; }
+        .reel-card:hover { transform: translateY(-6px); border-color: rgba(255,255,255,0.2); box-shadow: var(--shadow); }
+        .reel-video { position: relative; width: 100%; padding-bottom: 177.78%; background: #000; }
+        .reel-video iframe { position: absolute; inset: 0; width: 100%; height: 100%; }
+        .reel-meta { padding: 12px 14px 16px; }
+        .reel-meta h4 { font-size: 16px; margin-bottom: 6px; }
+        .reel-meta p { color: var(--text-secondary); font-size: 14px; }
+        .reel-arrow { position: absolute; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--border-color); background: rgba(255,255,255,0.04); color: var(--text-primary); display: grid; place-items: center; cursor: pointer; transition: var(--transition); z-index: 2; }
+        .reel-arrow:hover { background: rgba(255,255,255,0.1); }
+        .reel-arrow.left { left: 6px; }
+        .reel-arrow.right { right: 6px; }
+        .reels-track { scrollbar-gutter: stable both-edges; }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+          .reels-container { padding: 0 20px; }
+          .reel-card { width: 260px; min-width: 260px; }
         }
-
-        .video-container iframe {
-          position: absolute;
-          top: 0; left: 0;
-          width: 100%; height: 100%;
+        @media (max-width: 768px) {
+          .mobile-menu-toggle { display: block; }
+          .nav-links {
+            position: fixed; top: 80px; right: -100%; width: 100%; height: calc(100vh - 80px);
+            background: var(--dark-bg); flex-direction: column; padding: 40px; gap: 30px; transition: right 0.3s ease;
+            border-top: 1px solid var(--border-color); z-index: 1001;
+          }
+          .nav-links.mobile-open { right: 0; }
+          .nav-links button { font-size: 20px; width: 100%; text-align: left; }
+          .mobile-scrim { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; }
+          .section-header { flex-direction: column; align-items: flex-start; }
+          .filter-buttons { width: 100%; overflow-x: auto; padding-bottom: 10px; }
+          .section-content { padding: 80px 20px 40px; }
+          .projects-section { height: auto; min-height: 100vh; }
+          .section-header { padding: 80px 20px 20px; }
+          .projects-scroll-container { padding: 0 20px 20px; max-height: none; overflow-y: visible; }
+          .projects-grid { grid-template-columns: 1fr; gap: 20px; }
+          .hero-title { font-size: clamp(2.5rem, 6vw, 4rem); }
+          .skills-list { grid-template-columns: 1fr; }
+          .modal { padding: 30px 20px; }
+          .about-stats { grid-template-columns: 1fr; }
         }
-
-/* ---------- Reels (clean, FLEX) ---------- */
-.reels-section {
-  background: var(--dark-bg);
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: flex-start;
-  /* optional, so the header can't get clipped */
-  overflow: visible;
-}
-  .reels-section .section-content {
-  padding-top: 0;
-}
-/* outer container matches page width and centers nicely */
-.reels-container {
-  position: relative;
-  width: 100%;
-  max-width: none;   /* remove the 1400px cap */
-  margin: 0;         /* no extra centering margin */
-  padding: 0;        /* use .section-content's 80px side padding */
-}
-
-
-/* FLEX track; force LTR so first card starts at the left */
-.reels-track {
-  display: flex;
-  gap: 16px;
-  overflow-x: auto;
-  padding: 6px 0 12px;
-  scroll-snap-type: x proximity;
-  scrollbar-width: thin;
-  scrollbar-color: #444 #222;
-  direction: ltr;
-  overscroll-behavior-inline: contain;
-  scroll-padding-left: 0;
-}
-
-.reels-track.no-snap { scroll-snap-type: none !important; }
-
-.reels-track::-webkit-scrollbar { height: 8px; }
-.reels-track::-webkit-scrollbar-track { background: #222; border-radius: 4px; }
-.reels-track::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
-.reels-track::-webkit-scrollbar-thumb:hover { background: #555; }
-
-.reel-card {
-  width: 280px;
-  min-width: 280px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
-  scroll-snap-align: start;
-  cursor: pointer;
-  transition: var(--transition);
-  overflow: hidden;
-}
-.reel-card:hover {
-  transform: translateY(-6px);
-  border-color: rgba(255,255,255,0.2);
-  box-shadow: var(--shadow);
-}
-
-/* 9:16 video */
-.reel-video {
-  position: relative;
-  width: 100%;
-  padding-bottom: 177.78%;
-  background: #000;
-}
-.reel-video iframe {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-.reels-track { scrollbar-gutter: stable both-edges; }
-
-.reel-meta { padding: 12px 14px 16px; }
-.reel-meta h4 { font-size: 16px; margin-bottom: 6px; }
-.reel-meta p  { color: var(--text-secondary); font-size: 14px; }
-
-.reel-arrow {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 44px; height: 44px;
-  border-radius: 50%;
-  border: 1px solid var(--border-color);
-  background: rgba(255,255,255,0.04);
-  color: var(--text-primary);
-  display: grid; place-items: center;
-  cursor: pointer;
-  transition: var(--transition);
-  z-index: 2;
-}
-.reel-arrow:hover { background: rgba(255,255,255,0.1); }
-.reel-arrow.left  { left: 6px; }
-.reel-arrow.right { right: 6px; }
-
-  .reels-track { scrollbar-gutter: stable both-edges; }
-
-/* ---------- Responsive ---------- */
-@media (max-width: 1024px) {
-  .reels-container { padding: 0 20px; }
-  .reel-card { width: 260px; min-width: 260px; }
-}
-
-@media (max-width: 768px) {
-  .mobile-menu-toggle { display: block; }
-
-  /* slide-in panel for mobile nav */
-  .nav-links {
-    position: fixed;
-    top: 80px;
-    right: -100%;
-    width: 100%;
-    height: calc(100vh - 80px);
-    background: var(--dark-bg);
-    flex-direction: column;
-    padding: 40px;
-    gap: 30px;
-    transition: right 0.3s ease;
-    border-top: 1px solid var(--border-color);
-    z-index: 1001; /* above scrim */
-  }
-  .nav-links.mobile-open { right: 0; }
-  .nav-links button { font-size: 20px; width: 100%; text-align: left; }
-
-  /* dark scrim under the slide-in panel */
-  .mobile-scrim {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.5);
-    z-index: 1000; /* under the panel, over the page */
-  }
-
-  .section-header { flex-direction: column; align-items: flex-start; }
-  .filter-buttons { width: 100%; overflow-x: auto; padding-bottom: 10px; }
-  .section-content { padding: 80px 20px 40px; }
-  .projects-section { height: auto; min-height: 100vh; }
-  .section-header { padding: 80px 20px 20px; }
-  .projects-scroll-container { padding: 0 20px 20px; max-height: none; overflow-y: visible; }
-  .projects-grid { grid-template-columns: 1fr; gap: 20px; }
-  .hero-title { font-size: clamp(2.5rem, 6vw, 4rem); }
-  .skills-list { grid-template-columns: 1fr; }
-  .modal { padding: 30px 20px; }
-  .about-stats { grid-template-columns: 1fr; }
-}
-
         @media (max-width: 480px) {
           .nav-content { padding: 0 20px; }
           .project-card { border-radius: 12px; }
