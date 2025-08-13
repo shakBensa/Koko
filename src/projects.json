@@ -20,7 +20,6 @@
     { "id": 14, "title": "טמפטו 2", "secondaryTitle": "סרטון תדמית – בימוי, הפקה ועריכה", "videoUrl": "https://youtu.be/C-c1JUwge7g", "type": "both", "format": "standard", "category": "promo" },
     { "id": 15, "title": "בורות", "secondaryTitle": "קליפ – הפקה, בימוי, עריכה", "videoUrl": "https://youtu.be/ijYpmwzrcLQ", "type": "both", "format": "standard", "category": "music" },
 
-    { "id": 16, "title": "איך עשינו את עטיפת האלבום?", "secondaryTitle": "סושיאל / ריל", "videoUrl": "https://youtube.com/shorts/sI15f77OLdY?si=9uf7iWIlsVI3xmuj", "type": "videoEditing", "format": "reel", "category": "social" },
     { "id": 17, "title": "קולקטיב פרק 2", "secondaryTitle": "סושיאל / ריל – עריכה", "videoUrl": "https://youtube.com/shorts/bn6GCWT34KI?si=oqeRZ4gI4p2rGzNj", "type": "videoEditing", "format": "reel", "category": "social" },
     { "id": 18, "title": "קולקטיב פרק 3", "secondaryTitle": "סושיאל / ריל – עריכה", "videoUrl": "https://youtube.com/shorts/-TPY-HoVTIU?si=PQaBpXnSXDb4Pz9a", "type": "videoEditing", "format": "reel", "category": "social" },
     { "id": 19, "title": "מרכז שלטון אזורי ישראל", "secondaryTitle": "סושיאל / ריל", "videoUrl": "https://youtube.com/shorts/ObevelG63G0", "type": "videoEditing", "format": "reel", "category": "social" },
