@@ -267,6 +267,46 @@ const App = () => {
     setIsModalOpen(false);
     setCurrentProject(null);
   };
+// === Drop-in: Hebrew-safe thumbnail loader (no network loops) ===
+const ProjectThumb = ({
+  title,
+}: {
+  title: string;
+}) => {
+  if (title ==="אדון מאייר, זה אתה?") {
+    // special case for the Hebrew title that has a different thumbnail
+    return (
+      <img
+        src="/Thumbnails/אדון מאייר, זה אתה.jpg"
+        alt={title}
+        className="project-thumbnail"
+        loading="lazy"
+        decoding="async"
+      />
+    );
+  }
+  const enc = encodeURIComponent(title);
+  const [src, setSrc] = React.useState(`/Thumbnails/${enc}.png`);
+
+  // only update when title actually changes
+  React.useEffect(() => {
+    setSrc(`/Thumbnails/${enc}.png`);
+  }, [enc]);
+
+  return (
+    <img
+      src={src}
+      alt={title}
+      className="project-thumbnail"
+      loading="lazy"
+      decoding="async"
+      // try .jpg once; never loop
+      onError={() => {
+        if (src.endsWith(".png")) setSrc(`/Thumbnails/${enc}.jpg`);
+      }}
+    />
+  );
+};
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -483,16 +523,7 @@ const App = () => {
                 >
                   <div className="project-image">
                     {project.title && (
-                      <img
-                        src={`/Thumbnails/${project.title}.png`}
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          (target as any).onerror = null;
-                          target.src = `/Thumbnails/${project.title}.jpg`;
-                        }}
-                        alt={project.title}
-                        className="project-thumbnail"
-                      />
+                      <ProjectThumb title={project.title} />
                     )}
                   </div>
                   <div className="project-content">
