@@ -247,7 +247,7 @@ const App = () => {
   const SHOWREEL_EMBED =
     `https://www.youtube.com/embed/${SHOWREEL_ID}` +
     `?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&playsinline=1&loop=1&playlist=${SHOWREEL_ID}&enablejsapi=1`;
-  const [showHeroText, setShowHeroText] = useState(false);
+  // const [showHeroText, setShowHeroText] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
 
   useEffect(() => {
@@ -376,24 +376,7 @@ const App = () => {
   };
 
   /** --------------------- סינון והפרדה --------------------- */
-// ⛔️ Replace this line:
-// const all: Project[] = projects.data
-
-// ✅ With this normalization (handles legacy string/both → array)
-const normalizeType = (t: unknown): string[] => {
-  if (Array.isArray(t)) return t as string[];
-  if (typeof t === "string") {
-    return t === "both" ? ["videoEditing", "colorGrading"] : [t];
-  }
-  return [];
-};
-
-const all: Project[] = (projects.data as any[]).map((p: any) => ({
-  ...p,
-  type: normalizeType(p.type),
-  // keep literal union so TS is happy
-  format: p.format === "reel" ? "reel" : p.format === "standard" ? "standard" : undefined,
-}));
+  const all: Project[] = projects.data as Project[];
 
   // Helper to determine if a project matches the active role filter
   const matchesRoleFilter = (p: Project, filter: RoleFilter) =>
@@ -488,7 +471,7 @@ const all: Project[] = (projects.data as any[]).map((p: any) => ({
     />
   </div>
 
-  <div className={`hero-visibility ${showHeroText ? "open" : ""}`}>
+  <div className={`hero-visibility `}>
     <div className="section-content hero-content hero-align-left">
       <div className="hero-text hero-left-text">
         {isMobile ? 
