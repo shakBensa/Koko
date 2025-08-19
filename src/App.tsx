@@ -376,7 +376,24 @@ const App = () => {
   };
 
   /** --------------------- סינון והפרדה --------------------- */
-  const all: Project[] = projects.data as unknown as Project[];
+// ⛔️ Replace this line:
+// const all: Project[] = projects.data
+
+// ✅ With this normalization (handles legacy string/both → array)
+const normalizeType = (t: unknown): string[] => {
+  if (Array.isArray(t)) return t as string[];
+  if (typeof t === "string") {
+    return t === "both" ? ["videoEditing", "colorGrading"] : [t];
+  }
+  return [];
+};
+
+const all: Project[] = (projects.data as any[]).map((p: any) => ({
+  ...p,
+  type: normalizeType(p.type),
+  // keep literal union so TS is happy
+  format: p.format === "reel" ? "reel" : p.format === "standard" ? "standard" : undefined,
+}));
 
   // Helper to determine if a project matches the active role filter
   const matchesRoleFilter = (p: Project, filter: RoleFilter) =>
