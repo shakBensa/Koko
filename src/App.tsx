@@ -5,7 +5,7 @@ interface Project {
   title: string;
   secondaryTitle: string;
   videoUrl: string;
-  type: "colorGrading" | "videoEditing" | "both";
+  type: string[];
   format?: "standard" | "reel";
   category?: string;
   thumbnail?: string;
@@ -13,6 +13,21 @@ interface Project {
 
 // Import your actual projects data
 import projects from "./projects.json";
+
+// ====== Role maps (labels & CSS classes) ======
+const ROLE_LABEL: Record<string, string> = {
+  videoEditing: "Video Editing",
+  colorGrading: "Color Grading",
+  directing: "Directing",
+  production: "Production",
+};
+
+const ROLE_CLASS: Record<string, string> = {
+  videoEditing: "video-editing",
+  colorGrading: "color-grading",
+  directing: "directing",
+  production: "production",
+};
 
 // Component to animate section titles (unchanged)
 const AnimatedTitle = ({ children }: { children: string }) => {
@@ -189,13 +204,15 @@ const ReelsCarousel = ({
   );
 };
 
+type RoleFilter = "all" | "colorGrading" | "videoEditing" | "production" | "directing";
+
 const App = () => {
   const [activeSection, setActiveSection] = useState("home");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeFilter, setActiveFilter] = useState<"all" | "colorGrading" | "videoEditing">("all");
+  const [activeFilter, setActiveFilter] = useState<RoleFilter>("all");
   const [formData, setFormData] = useState({ name: "", email: "", message: "" });
 
   const homeRef = useRef<HTMLDivElement>(null);
@@ -267,46 +284,47 @@ const App = () => {
     setIsModalOpen(false);
     setCurrentProject(null);
   };
-// === Drop-in: Hebrew-safe thumbnail loader (no network loops) ===
-const ProjectThumb = ({
-  title,
-}: {
-  title: string;
-}) => {
-  if (title ==="אדון מאייר, זה אתה?") {
-    // special case for the Hebrew title that has a different thumbnail
+
+  // === Drop-in: Hebrew-safe thumbnail loader (no network loops) ===
+  const ProjectThumb = ({
+    title,
+  }: {
+    title: string;
+  }) => {
+    if (title === "אדון מאייר, זה אתה?") {
+      // special case for the Hebrew title that has a different thumbnail
+      return (
+        <img
+          src="/Thumbnails/אדון מאייר, זה אתה.jpg"
+          alt={title}
+          className="project-thumbnail"
+          loading="lazy"
+          decoding="async"
+        />
+      );
+    }
+    const enc = encodeURIComponent(title);
+    const [src, setSrc] = React.useState(`/Thumbnails/${enc}.png`);
+
+    // only update when title actually changes
+    React.useEffect(() => {
+      setSrc(`/Thumbnails/${enc}.png`);
+    }, [enc]);
+
     return (
       <img
-        src="/Thumbnails/אדון מאייר, זה אתה.jpg"
+        src={src}
         alt={title}
         className="project-thumbnail"
         loading="lazy"
         decoding="async"
+        // try .jpg once; never loop
+        onError={() => {
+          if (src.endsWith(".png")) setSrc(`/Thumbnails/${enc}.jpg`);
+        }}
       />
     );
-  }
-  const enc = encodeURIComponent(title);
-  const [src, setSrc] = React.useState(`/Thumbnails/${enc}.png`);
-
-  // only update when title actually changes
-  React.useEffect(() => {
-    setSrc(`/Thumbnails/${enc}.png`);
-  }, [enc]);
-
-  return (
-    <img
-      src={src}
-      alt={title}
-      className="project-thumbnail"
-      loading="lazy"
-      decoding="async"
-      // try .jpg once; never loop
-      onError={() => {
-        if (src.endsWith(".png")) setSrc(`/Thumbnails/${enc}.jpg`);
-      }}
-    />
-  );
-};
+  };
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -336,16 +354,14 @@ const ProjectThumb = ({
   };
 
   /** --------------------- סינון והפרדה --------------------- */
-  const all: Project[] = projects.data as Project[];
+  const all: Project[] = projects.data as unknown as Project[];
+
+  // Helper to determine if a project matches the active role filter
+  const matchesRoleFilter = (p: Project, filter: RoleFilter) =>
+    filter === "all" ? true : Array.isArray(p.type) && p.type.includes(filter);
 
   const standardProjects = all
-    .filter((p) =>
-      activeFilter === "all"
-        ? true
-        : activeFilter === "colorGrading"
-        ? p.type === "colorGrading" || p.type === "both"
-        : p.type === "videoEditing" || p.type === "both"
-    )
+    .filter((p) => matchesRoleFilter(p, activeFilter))
     .filter((p) => (p.format ?? "standard") !== "reel")
     .sort((a, b) => orderIndex(a.title, ORDER) - orderIndex(b.title, ORDER));
 
@@ -415,16 +431,16 @@ const ProjectThumb = ({
       {isMenuOpen && <div className="mobile-scrim" aria-hidden onClick={() => setIsMenuOpen(false)} />}
 
       <main>
-        {/* ===================== HERO ===================== */}
+        {/* ===================== HERO (sideways video covers height + timed hints) ===================== */}
         <section ref={homeRef} className="section hero-section">
-          {/* kill the old animated background to keep the video clean */}
           <div className="hero-background" aria-hidden></div>
 
-          {/* full-bleed video behind everything */}
+          {/* full-bleed video */}
           <div className="hero-video-wrapper" aria-hidden>
             <div className="hero-hover-scrim" aria-hidden></div>
             <iframe
               id="showreel-iframe"
+              className="showreel-frame"
               src={SHOWREEL_EMBED}
               title="Koral Dayan Cohen — Showreel"
               frameBorder={0}
@@ -438,7 +454,6 @@ const ProjectThumb = ({
           <div className={`hero-visibility ${showHeroText ? "open" : ""}`}>
             <div className="section-content hero-content hero-align-left">
               <div className="hero-text hero-left-text">
-                {/* Use the same animated title style to match the site */}
                 <AnimatedTitle>Video Editor & Producer</AnimatedTitle>
                 <p className="hero-subtitle">Transforming visions into cinematic reality</p>
                 <button className="cta-button" onClick={() => scrollToSection(projectsRef, "projects")}>
@@ -448,7 +463,7 @@ const ProjectThumb = ({
             </div>
           </div>
 
-          {/* Mobile info toggle (no hover) */}
+          {/* Mobile info toggle */}
           <button
             className="hero-info-toggle"
             onClick={() => setShowHeroText((v) => !v)}
@@ -459,7 +474,7 @@ const ProjectThumb = ({
             {showHeroText ? "×" : "i"}
           </button>
 
-          {/* Audio toggle (mute/unmute YouTube) */}
+          {/* Audio toggle (bottom-right on mobile) */}
           <button
             className="hero-audio-toggle"
             onClick={() => {
@@ -480,11 +495,117 @@ const ProjectThumb = ({
             {isMuted ? "🔇" : "🔊"}
           </button>
 
-          {/* scroll hint */}
-          <div className="scroll-indicator">
+          {/* scroll hint (auto-hides after 4s) */}
+          <div className="scroll-indicator timed-hide-4s">
             <div className="mouse"></div>
           </div>
+
+          {/* Rotate phone hint (centered, mobile portrait only, auto-hides after 4s) */}
+          <div className="rotate-hint timed-hide-4s" aria-hidden>
+            <div className="badge"><div className="phone-icon" /></div>
+            <span>Rotate your phone for a better view</span>
+          </div>
+
+          <style>{`
+    /* ===== MOBILE PORTRAIT: rotate 90° and COVER the hero height =====
+       Assumes 16:9 showreel. This makes the rotated iframe's height >= section height,
+       with no black bars. */
+    @media (orientation: portrait) and (max-width: 900px) {
+      .hero-video-wrapper .showreel-frame {
+        position: absolute !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform-origin: center center !important;
+        /* Rotate the landscape video to be sideways */
+        transform: translate(-50%, -50%) rotate(90deg) !important;
+
+        /* Set size to cover:
+           width before rotation = 16/9 * viewport height,
+           height before rotation = viewport width.
+           After rotation, the visible height = this width (>= 100vh). */
+        width: calc(100vh * 16 / 9) !important;
+        height: 100vw !important;
+      }
+      .hero-hover-scrim { opacity: 0.35; }
+    }
+
+    /* ===== Timed auto-hide (first 4s visible) ===== */
+    .hero-section .timed-hide-4s {
+      animation: hideAfter4s 0.5s ease forwards;
+      animation-delay: 4s;
+    }
+    @keyframes hideAfter4s { to { opacity: 0; visibility: hidden; } }
+
+    /* Ensure scroll indicator also disappears even if it animates internally */
+    .hero-section .scroll-indicator.timed-hide-4s .mouse,
+    .hero-section .scroll-indicator.timed-hide-4s .mouse::after {
+      animation-play-state: paused !important;
+    }
+
+    /* ===== Rotate hint (centered with better spacing) ===== */
+    .rotate-hint {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: none;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 16px;
+      background: rgba(0,0,0,0.55);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: #fff;
+      border-radius: 999px;
+      font-size: 14px;
+      z-index: 1200;
+      pointer-events: none;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      animation: hintIn .45s ease-out both, hideAfter4s 0.5s ease forwards;
+      animation-delay: .2s, 4s;
+      white-space: nowrap;
+    }
+    @keyframes hintIn {
+      from { opacity: 0; transform: translate(-50%, -46%); }
+      to   { opacity: 1; transform: translate(-50%, -50%); }
+    }
+    .rotate-hint .badge {
+      width: 30px; height: 30px; border-radius: 999px;
+      background: rgba(255,255,255,0.12);
+      display: grid; place-items: center; flex-shrink: 0;
+    }
+    .phone-icon {
+      width: 18px; height: 26px; border-radius: 4px;
+      border: 2px solid rgba(255,255,255,0.9);
+      position: relative; transform-origin: 60% 50%;
+      animation: rotatePhone 2.5s ease-in-out infinite;
+    }
+    .phone-icon::after {
+      content: ''; position: absolute; bottom: 2px; left: 50%;
+      transform: translateX(-50%); width: 6px; height: 2px; border-radius: 1px;
+      background: rgba(255,255,255,0.9);
+    }
+    @keyframes rotatePhone {
+      0%,20% { transform: rotate(0deg); }
+      45%,60% { transform: rotate(90deg); }
+      85%,100% { transform: rotate(0deg); }
+    }
+
+    /* Show rotate hint only on mobile portrait */
+    @media (orientation: portrait) and (max-width: 900px) {
+      .rotate-hint { display: inline-flex; }
+      .hero-audio-toggle {
+        top: auto;
+        bottom: max(16px, env(safe-area-inset-bottom));
+        right: max(16px, env(safe-area-inset-right));
+        width: 46px; height: 46px;
+      }
+    }
+  `}</style>
         </section>
+
+
+
 
         {/* ===================== PROJECTS ===================== */}
         <section ref={projectsRef} className="section projects-section">
@@ -509,6 +630,18 @@ const ProjectThumb = ({
               >
                 Video Editing
               </button>
+              <button
+                className={`filter-btn ${activeFilter === "production" ? "active" : ""}`}
+                onClick={() => setActiveFilter("production")}
+              >
+                Production
+              </button>
+              <button
+                className={`filter-btn ${activeFilter === "directing" ? "active" : ""}`}
+                onClick={() => setActiveFilter("directing")}
+              >
+                Directing
+              </button>
             </div>
           </div>
 
@@ -530,16 +663,11 @@ const ProjectThumb = ({
                     <h3 className="project-title">{project.title}</h3>
                     <p className="project-subtitle">{project.secondaryTitle}</p>
                     <div className="project-tags">
-                      {project.type === "both" ? (
-                        <>
-                          <span className="tag color-grading">Color Grading</span>
-                          <span className="tag video-editing">Video Editing</span>
-                        </>
-                      ) : project.type === "colorGrading" ? (
-                        <span className="tag color-grading">Color Grading</span>
-                      ) : (
-                        <span className="tag video-editing">Video Editing</span>
-                      )}
+                      {(project.type ?? []).map((role) => (
+                        <span key={role} className={`tag ${ROLE_CLASS[role] ?? ""}`}>
+                          {ROLE_LABEL[role] ?? role}
+                        </span>
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -939,6 +1067,8 @@ const ProjectThumb = ({
         .tag { padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
         .tag.color-grading { background: rgba(216, 157, 157, 0.2); color: #d89d9d; }
         .tag.video-editing { background: rgba(127, 154, 235, 0.2); color: #7f9aeb; }
+        .tag.directing { background: rgba(255, 215, 130, 0.2); color: #ffd782; }
+        .tag.production { background: rgba(116, 209, 164, 0.2); color: #74d1a4; }
 
         /* About Section */
         .about-section { background: var(--dark-bg); display: flex; align-items: center; justify-content: center; }
