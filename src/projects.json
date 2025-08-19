@@ -1,39 +1,31 @@
 {
   "data": [
-    { "id": 1, "title": "כנס גוגל", "secondaryTitle": "תדמית – עריכה", "videoUrl": "https://youtu.be/cN46fDB6sEo", "type": "videoEditing", "format": "standard", "category": "promo" },
-    { "id": 2, "title": "עבודותיו של יונתן", "secondaryTitle": "גיוס המונים", "videoUrl": "https://youtu.be/4xeq6il7wwQ", "type": "videoEditing", "format": "standard", "category": "promo" },
-    { "id": 3, "title": "לא נעים", "secondaryTitle": "סדרת רשת – זוכה מקום ראשון בפסטיבל קולנוע דרום – עריכה", "videoUrl": "https://youtu.be/NMM1hBqNZoQ", "type": "videoEditing", "format": "standard", "category": "series" },
+    { "id": 1, "title": "כנס גוגל", "secondaryTitle": "תדמית", "videoUrl": "https://youtu.be/cN46fDB6sEo", "type": ["videoEditing"], "format": "standard", "category": "promo" },
+    { "id": 2, "title": "עבודותיו של יונתן", "secondaryTitle": "גיוס המונים", "videoUrl": "https://youtu.be/4xeq6il7wwQ", "type": ["videoEditing"], "format": "standard", "category": "promo" },
+    { "id": 3, "title": "לא נעים", "secondaryTitle": "סדרת רשת – זוכה מקום ראשון בפסטיבל קולנוע דרום", "videoUrl": "https://youtu.be/NMM1hBqNZoQ", "type": ["videoEditing"], "format": "standard", "category": "series" },
 
-    { "id": 4, "title": "סטודיו NMC", "secondaryTitle": "פרסומת – עריכה", "videoUrl": "https://youtu.be/IAcx9_tzD1s", "type": "videoEditing", "format": "standard", "category": "promo" },
-    { "id": 5, "title": "take a morning nap", "secondaryTitle": "פרסומת – מפיקה, ע. במאי", "videoUrl": "https://youtu.be/xlum2OR6OR4", "type": "videoEditing", "format": "standard", "category": "promo" },
-    { "id": 6, "title": "מאסטר קלאס אור קופליס", "secondaryTitle": "תדמית – הפקה, עריכה", "videoUrl": "https://youtu.be/4gwemBsQoWE", "type": "videoEditing", "format": "standard", "category": "promo" },
+    { "id": 4, "title": "סטודיו NMC", "secondaryTitle": "פרסומת", "videoUrl": "https://youtu.be/IAcx9_tzD1s", "type": ["videoEditing"], "format": "standard", "category": "promo" },
+    { "id": 5, "title": "take a morning nap", "secondaryTitle": "פרסומת", "videoUrl": "https://youtu.be/xlum2OR6OR4", "type": ["production", "directing"], "format": "standard", "category": "promo" },
+    { "id": 6, "title": "מאסטר קלאס אור קופליס", "secondaryTitle": "תדמית", "videoUrl": "https://youtu.be/4gwemBsQoWE", "type": ["production", "videoEditing"], "format": "standard", "category": "promo" },
 
-    { "id": 7, "title": "שווה בשווה", "secondaryTitle": "דוקומנטרי קצר – זוכה מקום שני בדוקאביב – עריכה", "videoUrl": "https://youtu.be/iELVQdmfbkk", "type": "videoEditing", "format": "standard", "category": "doc" },
-    { "id": 8, "title": "אדון מאייר, זה אתה?", "secondaryTitle": "סרט עלילתי קצר – פרויקט גמר הוקרן בפסטיבל קולנוע דרום – הפקה, עריכה, צבע", "videoUrl": "https://youtu.be/rFOU5fDv1ig", "type": "both", "format": "standard", "category": "film" },
-    { "id": 9, "title": "טכנוסו באים לתל השומר", "secondaryTitle": "סרטון תדמית – בימוי, הפקה, עריכה", "videoUrl": "https://youtu.be/zUGuJVuz3DI", "type": "both", "format": "standard", "category": "promo" },
+    { "id": 7, "title": "שווה בשווה", "secondaryTitle": "דוקומנטרי קצר – זוכה מקום שני בדוקאביב", "videoUrl": "https://youtu.be/iELVQdmfbkk", "type": ["videoEditing"], "format": "standard", "category": "doc" },
+    { "id": 8, "title": "אדון מאייר, זה אתה?", "secondaryTitle": "סרט עלילתי קצר – פרויקט גמר הוקרן בפסטיבל קולנוע דרום", "videoUrl": "https://youtu.be/rFOU5fDv1ig", "type": ["production", "videoEditing", "colorGrading"], "format": "standard", "category": "film" },
+    { "id": 9, "title": "טכנוסו באים לתל השומר", "secondaryTitle": "סרטון תדמית", "videoUrl": "https://youtu.be/zUGuJVuz3DI", "type": ["colorGrading","directing", "production", "videoEditing"], "format": "standard", "category": "promo" },
 
-    { "id": 10, "title": "דיג׳יי נתי תמם", "secondaryTitle": "דוקו מוזיקלי קצר – עריכה", "videoUrl": "https://youtu.be/GjFlc_2o3K8", "type": "videoEditing", "format": "standard", "category": "doc" },
-    { "id": 11, "title": "בזעת", "secondaryTitle": "דוקו מוזיקלי קצר – בימוי, הפקה, עריכה", "videoUrl": "https://youtu.be/7Nj7ZmVhdz8", "type": "both", "format": "standard", "category": "doc" },
-    { "id": 12, "title": "מורעאק", "secondaryTitle": "סרטון תדמית – הפקה, בימוי, עריכה", "videoUrl": "https://youtu.be/mgH17SVxB5I", "type": "both", "format": "standard", "category": "promo" },
+    { "id": 10, "title": "דיג׳יי נתי תמם", "secondaryTitle": "דוקו מוזיקלי קצר", "videoUrl": "https://youtu.be/GjFlc_2o3K8", "type": ["videoEditing"], "format": "standard", "category": "doc" },
+    { "id": 11, "title": "בזעת", "secondaryTitle": "דוקו מוזיקלי קצר", "videoUrl": "https://youtu.be/7Nj7ZmVhdz8", "type": ["colorGrading","directing", "production", "videoEditing"], "format": "standard", "category": "doc" },
+    { "id": 12, "title": "מורעאק", "secondaryTitle": "סרטון תדמית", "videoUrl": "https://youtu.be/mgH17SVxB5I", "type": ["colorGrading","production", "directing", "videoEditing"], "format": "standard", "category": "promo" },
 
-    { "id": 13, "title": "טמפטו 1", "secondaryTitle": "סרטון תדמית – בימוי, הפקה, עריכה", "videoUrl": "https://youtu.be/Hn-SqiSubh8", "type": "both", "format": "standard", "category": "promo" },
-    { "id": 14, "title": "טמפטו 2", "secondaryTitle": "סרטון תדמית – בימוי, הפקה ועריכה", "videoUrl": "https://youtu.be/C-c1JUwge7g", "type": "both", "format": "standard", "category": "promo" },
-    { "id": 15, "title": "בורות", "secondaryTitle": "קליפ – הפקה, בימוי, עריכה", "videoUrl": "https://youtu.be/ijYpmwzrcLQ", "type": "both", "format": "standard", "category": "music" },
+    { "id": 13, "title": "טמפטו 1", "secondaryTitle": "סרטון תדמית", "videoUrl": "https://youtu.be/Hn-SqiSubh8", "type": ["colorGrading","directing", "production", "videoEditing"], "format": "standard", "category": "promo" },
+    { "id": 14, "title": "טמפטו 2", "secondaryTitle": "סרטון תדמית", "videoUrl": "https://youtu.be/C-c1JUwge7g", "type": ["colorGrading","directing", "production", "videoEditing"], "format": "standard", "category": "promo" },
+    { "id": 15, "title": "בורות", "secondaryTitle": "קליפ", "videoUrl": "https://youtu.be/ijYpmwzrcLQ", "type": ["colorGrading","production", "directing", "videoEditing"], "format": "standard", "category": "music" },
 
-    { "id": 17, "title": "קולקטיב פרק 2", "secondaryTitle": "סושיאל / ריל – עריכה", "videoUrl": "https://youtube.com/shorts/bn6GCWT34KI?si=oqeRZ4gI4p2rGzNj", "type": "videoEditing", "format": "reel", "category": "social" },
-    { "id": 18, "title": "קולקטיב פרק 3", "secondaryTitle": "סושיאל / ריל – עריכה", "videoUrl": "https://youtube.com/shorts/-TPY-HoVTIU?si=PQaBpXnSXDb4Pz9a", "type": "videoEditing", "format": "reel", "category": "social" },
-    { "id": 19, "title": "מרכז שלטון אזורי ישראל", "secondaryTitle": "סושיאל / ריל", "videoUrl": "https://youtube.com/shorts/ObevelG63G0", "type": "videoEditing", "format": "reel", "category": "social" },
-    { 
-  "id": 20, 
-  "title": "יובי סושיאל", 
-  "secondaryTitle": "סושיאל / ריל", 
-  "videoUrl": "https://youtube.com/shorts/sI15f77OLdY?si=9uf7iWIlsVI3xmuj", 
-  "type": "videoEditing", 
-  "format": "reel", 
-  "category": "social" 
-},
-    { "id": 21, "title": "סיכום חתונה", "secondaryTitle": "סושיאל / ריל", "videoUrl": "https://youtube.com/shorts/kvSCRHC6T6Y", "type": "videoEditing", "format": "reel", "category": "social" },
-    { "id": 22, "title": "קולקטיב פרק 4", "secondaryTitle": "סושיאל / ריל – עריכה", "videoUrl": "https://youtube.com/shorts/PEGHJ246Vfk?si=ohvMB5rz2X-9v4Nj", "type": "videoEditing", "format": "reel", "category": "social" },
-    { "id": 23, "title": "קולקטיב פרק 1", "secondaryTitle": "סושיאל / ריל – עריכה", "videoUrl": "https://youtube.com/shorts/0m2Sxtm2NFM", "type": "videoEditing", "format": "reel", "category": "social" }
+    { "id": 17, "title": "קולקטיב פרק 2", "secondaryTitle": "סושיאל / ריל", "videoUrl": "https://youtube.com/shorts/bn6GCWT34KI?si=oqeRZ4gI4p2rGzNj", "type": ["videoEditing"], "format": "reel", "category": "social" },
+    { "id": 18, "title": "קולקטיב פרק 3", "secondaryTitle": "סושיאל / ריל", "videoUrl": "https://youtube.com/shorts/-TPY-HoVTIU?si=PQaBpXnSXDb4Pz9a", "type": ["videoEditing"], "format": "reel", "category": "social" },
+    { "id": 19, "title": "מרכז שלטון אזורי ישראל", "secondaryTitle": "סושיאל / ריל", "videoUrl": "https://youtube.com/shorts/ObevelG63G0", "type": ["videoEditing"], "format": "reel", "category": "social" },
+    { "id": 20, "title": "יובי סושיאל", "secondaryTitle": "סושיאל / ריל", "videoUrl": "https://youtube.com/shorts/sI15f77OLdY?si=9uf7iWIlsVI3xmuj", "type": ["videoEditing"], "format": "reel", "category": "social" },
+    { "id": 21, "title": "סיכום חתונה", "secondaryTitle": "סושיאל / ריל", "videoUrl": "https://youtube.com/shorts/kvSCRHC6T6Y", "type": ["videoEditing"], "format": "reel", "category": "social" },
+    { "id": 22, "title": "קולקטיב פרק 4", "secondaryTitle": "סושיאל / ריל", "videoUrl": "https://youtube.com/shorts/PEGHJ246Vfk?si=ohvMB5rz2X-9v4Nj", "type": ["videoEditing"], "format": "reel", "category": "social" },
+    { "id": 23, "title": "קולקטיב פרק 1", "secondaryTitle": "סושיאל / ריל", "videoUrl": "https://youtube.com/shorts/0m2Sxtm2NFM", "type": ["videoEditing"], "format": "reel", "category": "social" }
   ]
 }
