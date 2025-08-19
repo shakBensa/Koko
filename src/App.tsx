@@ -34,6 +34,9 @@ const AnimatedTitle = ({ children }: { children: string }) => {
   const [isVisible, setIsVisible] = useState(false);
   const titleRef = useRef<HTMLHeadingElement>(null);
 
+  // Detect mobile (same as isMobile in App)
+  const isMobile = typeof window !== "undefined" && window.innerWidth <= 900;
+
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -50,6 +53,24 @@ const AnimatedTitle = ({ children }: { children: string }) => {
     };
   }, [isVisible]);
 
+  if (isMobile) {
+    // Break each word to a new line
+    return (
+      <h2 ref={titleRef} className={`section-title ${isVisible ? "animate" : ""}`}>
+        {children.split(" ").map((word, wIdx) => (
+          <span key={wIdx} style={{ display: "block" }}>
+            {word.split("").map((letter, lIdx) => (
+              <span key={lIdx} style={{ animationDelay: `${(wIdx * 10 + lIdx) * 0.03}s` }}>
+                {letter}
+              </span>
+            ))}
+          </span>
+        ))}
+      </h2>
+    );
+  }
+
+  // Desktop: animate each letter, no line breaks
   return (
     <h2 ref={titleRef} className={`section-title ${isVisible ? "animate" : ""}`}>
       {children.split("").map((letter, index) => (
@@ -219,6 +240,7 @@ const App = () => {
   const projectsRef = useRef<HTMLDivElement>(null);
   const aboutRef = useRef<HTMLDivElement>(null);
   const contactRef = useRef<HTMLDivElement>(null);
+  const isMobile = window.innerWidth <= 900;
 
   // HERO: showreel + controls
   const SHOWREEL_ID = "FMtpnUR3MgM";
@@ -431,169 +453,122 @@ const App = () => {
       {isMenuOpen && <div className="mobile-scrim" aria-hidden onClick={() => setIsMenuOpen(false)} />}
 
       <main>
-        {/* ===================== HERO (sideways video covers height + timed hints) ===================== */}
-        <section ref={homeRef} className="section hero-section">
-          <div className="hero-background" aria-hidden></div>
+{/* ===================== HERO (sideways video, centered, no-crop, full-height on mobile portrait) ===================== */}
+<section ref={homeRef} className="section hero-section">
+  <div className="hero-background" aria-hidden></div>
 
-          {/* full-bleed video */}
-          <div className="hero-video-wrapper" aria-hidden>
-            <div className="hero-hover-scrim" aria-hidden></div>
-            <iframe
-              id="showreel-iframe"
-              className="showreel-frame"
-              src={SHOWREEL_EMBED}
-              title="Koral Dayan Cohen — Showreel"
-              frameBorder={0}
-              allow="autoplay; fullscreen; clipboard-write; encrypted-media; picture-in-picture; web-share"
-              allowFullScreen
-              tabIndex={-1}
-            />
-          </div>
+  <div className="hero-video-wrapper" aria-hidden>
+    <div className="hero-hover-scrim" aria-hidden></div>
+    <iframe
+      id="showreel-iframe"
+      className="showreel-frame"
+      src={SHOWREEL_EMBED}
+      title="Koral Dayan Cohen — Showreel"
+      frameBorder={0}
+      allow="autoplay; fullscreen; clipboard-write; encrypted-media; picture-in-picture; web-share"
+      allowFullScreen
+      tabIndex={-1}
+    />
+  </div>
 
-          {/* text wrapper — shows on hover (desktop) or toggle (mobile) */}
-          <div className={`hero-visibility ${showHeroText ? "open" : ""}`}>
-            <div className="section-content hero-content hero-align-left">
-              <div className="hero-text hero-left-text">
-                <AnimatedTitle>Video Editor & Producer</AnimatedTitle>
-                <p className="hero-subtitle">Transforming visions into cinematic reality</p>
+  <div className={`hero-visibility ${showHeroText ? "open" : ""}`}>
+    <div className="section-content hero-content hero-align-left">
+      <div className="hero-text hero-left-text">
+        {isMobile ? 
+                  <>
+        <AnimatedTitle>Video-Editor Producer</AnimatedTitle>
+          </>
+                :  
+                <>
+        <AnimatedTitle>Video Editor & Producer</AnimatedTitle>
+        <p className="hero-subtitle">Transforming visions into cinematic reality</p>
+
+                </>
+
+          }
                 <button className="cta-button" onClick={() => scrollToSection(projectsRef, "projects")}>
-                  View My Work
-                </button>
-              </div>
-            </div>
-          </div>
+          View My Work
+        </button>
+      </div>
+    </div>
+  </div>
 
-          {/* Mobile info toggle */}
-          <button
-            className="hero-info-toggle"
-            onClick={() => setShowHeroText((v) => !v)}
-            aria-pressed={showHeroText}
-            aria-label={showHeroText ? "Hide hero text" : "Show hero text"}
-            title={showHeroText ? "Hide" : "Show"}
-          >
-            {showHeroText ? "×" : "i"}
-          </button>
+  {/* <button
+    className="hero-info-toggle"
+    onClick={() => setShowHeroText((v) => !v)}
+    aria-pressed={showHeroText}
+    aria-label={showHeroText ? "Hide hero text" : "Show hero text"}
+    title={showHeroText ? "Hide" : "Show"}
+  >
+    {showHeroText ? "×" : "i"}
+  </button> */}
 
-          {/* Audio toggle (bottom-right on mobile) */}
-          <button
-            className="hero-audio-toggle"
-            onClick={() => {
-              const iframe = document.getElementById("showreel-iframe") as HTMLIFrameElement | null;
-              const win = iframe?.contentWindow;
-              if (!win) return;
-              win.postMessage(JSON.stringify({ event: "command", func: isMuted ? "unMute" : "mute", args: [] }), "*");
-              if (isMuted) {
-                win.postMessage(JSON.stringify({ event: "command", func: "setVolume", args: [100] }), "*");
-                win.postMessage(JSON.stringify({ event: "command", func: "playVideo", args: [] }), "*");
-              }
-              setIsMuted((m) => !m);
-            }}
-            aria-pressed={!isMuted}
-            aria-label={isMuted ? "Unmute video" : "Mute video"}
-            title={isMuted ? "Unmute" : "Mute"}
-          >
-            {isMuted ? "🔇" : "🔊"}
-          </button>
+  <button
+    className="hero-audio-toggle"
+    onClick={() => {
+      const iframe = document.getElementById("showreel-iframe") as HTMLIFrameElement | null;
+      const win = iframe?.contentWindow;
+      if (!win) return;
+      win.postMessage(JSON.stringify({ event: "command", func: isMuted ? "unMute" : "mute", args: [] }), "*");
+      if (isMuted) {
+        win.postMessage(JSON.stringify({ event: "command", func: "setVolume", args: [100] }), "*");
+        win.postMessage(JSON.stringify({ event: "command", func: "playVideo", args: [] }), "*");
+      }
+      setIsMuted((m) => !m);
+    }}
+    aria-pressed={!isMuted}
+    aria-label={isMuted ? "Unmute video" : "Mute video"}
+    title={isMuted ? "Unmute" : "Mute"}
+  >
+    {isMuted ? "🔇" : "🔊"}
+  </button>
 
-          {/* scroll hint (auto-hides after 4s) */}
-          <div className="scroll-indicator timed-hide-4s">
-            <div className="mouse"></div>
-          </div>
+  {/* scroll hint – auto hides after 4s */}
+  <div className="scroll-indicator timed-hide-4s">
+    <div className="mouse"></div>
+  </div>
 
-          {/* Rotate phone hint (centered, mobile portrait only, auto-hides after 4s) */}
-          <div className="rotate-hint timed-hide-4s" aria-hidden>
-            <div className="badge"><div className="phone-icon" /></div>
-            <span>Rotate your phone for a better view</span>
-          </div>
+  {/* rotate hint – centered & auto hides after 4s */}
+  <div className="rotate-hint timed-hide-4s" aria-hidden>
+    <div className="badge"><div className="phone-icon" /></div>
+    <span>Rotate your phone for a better view</span>
+  </div>
 
-          <style>{`
-    /* ===== MOBILE PORTRAIT: rotate 90° and COVER the hero height =====
-       Assumes 16:9 showreel. This makes the rotated iframe's height >= section height,
-       with no black bars. */
+  <style>{`
+    /* ===== FIX: remove hero padding/margin on mobile portrait so the video can truly center ===== */
+    @media (orientation: portrait) and (max-width: 900px) {
+      .hero-section {
+        min-height: 100svh !important;
+        height: 100svh !important;
+        padding: 0 !important;      /* overrides the 80px padding-top from desktop */
+        margin-top: 0 !important;    /* overrides the 80px margin-top from desktop */
+        overflow: hidden !important;
+      }
+      .hero-video-wrapper { position: absolute; inset: 0; }
+    }
+
+    /* ===== SIDEWAYS + NO-CROP (CONTAIN) + PERFECT CENTER =====
+       Largest size that fits both dimension constraints. Centers via translate(-50%, -50%). */
     @media (orientation: portrait) and (max-width: 900px) {
       .hero-video-wrapper .showreel-frame {
         position: absolute !important;
         top: 50% !important;
         left: 50% !important;
         transform-origin: center center !important;
-        /* Rotate the landscape video to be sideways */
+
+        /* Choose the biggest rotated box that still fits — NO CROPPING */
+        /* After 90° rotation, CSS width becomes displayed height. */
+        --Wcss: min(100svh, calc(100svw * 16 / 9));   /* displayed height */
+        width: var(--Wcss) !important;                 /* before rotation */
+        height: calc(var(--Wcss) * 9 / 16) !important; /* displayed width */
+
         transform: translate(-50%, -50%) rotate(90deg) !important;
-
-        /* Set size to cover:
-           width before rotation = 16/9 * viewport height,
-           height before rotation = viewport width.
-           After rotation, the visible height = this width (>= 100vh). */
-        width: calc(100vh * 16 / 9) !important;
-        height: 100vw !important;
+        background: #000;
       }
-      .hero-hover-scrim { opacity: 0.35; }
-    }
 
-    /* ===== Timed auto-hide (first 4s visible) ===== */
-    .hero-section .timed-hide-4s {
-      animation: hideAfter4s 0.5s ease forwards;
-      animation-delay: 4s;
-    }
-    @keyframes hideAfter4s { to { opacity: 0; visibility: hidden; } }
+      .hero-hover-scrim { opacity: 0.3; }
 
-    /* Ensure scroll indicator also disappears even if it animates internally */
-    .hero-section .scroll-indicator.timed-hide-4s .mouse,
-    .hero-section .scroll-indicator.timed-hide-4s .mouse::after {
-      animation-play-state: paused !important;
-    }
-
-    /* ===== Rotate hint (centered with better spacing) ===== */
-    .rotate-hint {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      display: none;
-      align-items: center;
-      gap: 14px;
-      padding: 12px 16px;
-      background: rgba(0,0,0,0.55);
-      border: 1px solid rgba(255,255,255,0.15);
-      color: #fff;
-      border-radius: 999px;
-      font-size: 14px;
-      z-index: 1200;
-      pointer-events: none;
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-      animation: hintIn .45s ease-out both, hideAfter4s 0.5s ease forwards;
-      animation-delay: .2s, 4s;
-      white-space: nowrap;
-    }
-    @keyframes hintIn {
-      from { opacity: 0; transform: translate(-50%, -46%); }
-      to   { opacity: 1; transform: translate(-50%, -50%); }
-    }
-    .rotate-hint .badge {
-      width: 30px; height: 30px; border-radius: 999px;
-      background: rgba(255,255,255,0.12);
-      display: grid; place-items: center; flex-shrink: 0;
-    }
-    .phone-icon {
-      width: 18px; height: 26px; border-radius: 4px;
-      border: 2px solid rgba(255,255,255,0.9);
-      position: relative; transform-origin: 60% 50%;
-      animation: rotatePhone 2.5s ease-in-out infinite;
-    }
-    .phone-icon::after {
-      content: ''; position: absolute; bottom: 2px; left: 50%;
-      transform: translateX(-50%); width: 6px; height: 2px; border-radius: 1px;
-      background: rgba(255,255,255,0.9);
-    }
-    @keyframes rotatePhone {
-      0%,20% { transform: rotate(0deg); }
-      45%,60% { transform: rotate(90deg); }
-      85%,100% { transform: rotate(0deg); }
-    }
-
-    /* Show rotate hint only on mobile portrait */
-    @media (orientation: portrait) and (max-width: 900px) {
-      .rotate-hint { display: inline-flex; }
+      /* Bottom-right mute button on mobile */
       .hero-audio-toggle {
         top: auto;
         bottom: max(16px, env(safe-area-inset-bottom));
@@ -601,8 +576,41 @@ const App = () => {
         width: 46px; height: 46px;
       }
     }
+
+    /* ===== Timed auto-hide (first 4s visible) ===== */
+    .hero-section .timed-hide-4s {
+      animation: hideAfter4s 0.5s ease forwards;
+      animation-delay: 4s;
+      will-change: opacity, visibility;
+    }
+    @keyframes hideAfter4s { to { opacity: 0; visibility: hidden; } }
+    .hero-section .scroll-indicator.timed-hide-4s * { animation-play-state: paused !important; }
+
+    /* ===== Rotate hint styling ===== */
+    .rotate-hint {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      display: none; align-items: center; gap: 14px;
+      padding: 12px 16px; background: rgba(0,0,0,0.55);
+      border: 1px solid rgba(255,255,255,0.15); color: #fff;
+      border-radius: 999px; z-index: 1200; pointer-events: none;
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      white-space: nowrap;
+      animation: hintIn .45s ease-out both, hideAfter4s 0.5s ease forwards;
+      animation-delay: .2s, 4s;
+    }
+    @keyframes hintIn { from { opacity: 0; transform: translate(-50%, -46%);} to { opacity: 1; transform: translate(-50%, -50%);} }
+    .rotate-hint .badge { width: 30px; height: 30px; border-radius: 999px; background: rgba(255,255,255,0.12); display: grid; place-items: center; }
+    .phone-icon { width: 18px; height: 26px; border-radius: 4px; border: 2px solid rgba(255,255,255,0.9); position: relative; transform-origin: 60% 50%; animation: rotatePhone 2.5s ease-in-out infinite; }
+    .phone-icon::after { content:''; position:absolute; bottom:2px; left:50%; transform:translateX(-50%); width:6px; height:2px; border-radius:1px; background:rgba(255,255,255,0.9); }
+    @keyframes rotatePhone { 0%,20%{transform:rotate(0)} 45%,60%{transform:rotate(90deg)} 85%,100%{transform:rotate(0)} }
+
+    @media (orientation: portrait) and (max-width: 900px) { .rotate-hint { display: inline-flex; } }
+    @media (orientation: landscape) { .rotate-hint { display: none !important; } }
   `}</style>
-        </section>
+</section>
+
+
 
 
 
