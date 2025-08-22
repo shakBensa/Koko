@@ -453,47 +453,47 @@ const App = () => {
       {isMenuOpen && <div className="mobile-scrim" aria-hidden onClick={() => setIsMenuOpen(false)} />}
 
       <main>
-{/* ===================== HERO (sideways video, centered, no-crop, full-height on mobile portrait) ===================== */}
-<section ref={homeRef} className="section hero-section">
-  <div className="hero-background" aria-hidden></div>
+        {/* ===================== HERO (sideways video, centered, no-crop, full-height on mobile portrait) ===================== */}
+        <section ref={homeRef} className="section hero-section">
+          <div className="hero-background" aria-hidden></div>
 
-  <div className="hero-video-wrapper" aria-hidden>
-    <div className="hero-hover-scrim" aria-hidden></div>
-    <iframe
-      id="showreel-iframe"
-      className="showreel-frame"
-      src={SHOWREEL_EMBED}
-      title="Koral Dayan Cohen — Showreel"
-      frameBorder={0}
-      allow="autoplay; fullscreen; clipboard-write; encrypted-media; picture-in-picture; web-share"
-      allowFullScreen
-      tabIndex={-1}
-    />
-  </div>
+          <div className="hero-video-wrapper" aria-hidden>
+            <div className="hero-hover-scrim" aria-hidden></div>
+            <iframe
+              id="showreel-iframe"
+              className="showreel-frame"
+              src={SHOWREEL_EMBED}
+              title="Koral Dayan Cohen — Showreel"
+              frameBorder={0}
+              allow="autoplay; fullscreen; clipboard-write; encrypted-media; picture-in-picture; web-share"
+              allowFullScreen
+              tabIndex={-1}
+            />
+          </div>
 
-  <div className={`hero-visibility `}>
-    <div className="section-content hero-content hero-align-left">
-      <div className="hero-text hero-left-text">
-        {isMobile ? 
+          <div className={`hero-visibility `}>
+            <div className="section-content hero-content hero-align-left">
+              <div className="hero-text hero-left-text">
+                {isMobile ?
                   <>
-        <AnimatedTitle>Video-Editor Producer</AnimatedTitle>
-          </>
-                :  
-                <>
-        <AnimatedTitle>Video Editor & Producer</AnimatedTitle>
-        <p className="hero-subtitle">Transforming visions into cinematic reality</p>
+                    <AnimatedTitle>Video-Editor Producer</AnimatedTitle>
+                  </>
+                  :
+                  <>
+                    <AnimatedTitle>Video Editor & Producer</AnimatedTitle>
+                    <p className="hero-subtitle">Transforming visions into cinematic reality</p>
 
-                </>
+                  </>
 
-          }
+                }
                 <button className="cta-button" onClick={() => scrollToSection(projectsRef, "projects")}>
-          View My Work
-        </button>
-      </div>
-    </div>
-  </div>
+                  View My Work
+                </button>
+              </div>
+            </div>
+          </div>
 
-  {/* <button
+          {/* <button
     className="hero-info-toggle"
     onClick={() => setShowHeroText((v) => !v)}
     aria-pressed={showHeroText}
@@ -503,38 +503,38 @@ const App = () => {
     {showHeroText ? "×" : "i"}
   </button> */}
 
-  <button
-    className="hero-audio-toggle"
-    onClick={() => {
-      const iframe = document.getElementById("showreel-iframe") as HTMLIFrameElement | null;
-      const win = iframe?.contentWindow;
-      if (!win) return;
-      win.postMessage(JSON.stringify({ event: "command", func: isMuted ? "unMute" : "mute", args: [] }), "*");
-      if (isMuted) {
-        win.postMessage(JSON.stringify({ event: "command", func: "setVolume", args: [100] }), "*");
-        win.postMessage(JSON.stringify({ event: "command", func: "playVideo", args: [] }), "*");
-      }
-      setIsMuted((m) => !m);
-    }}
-    aria-pressed={!isMuted}
-    aria-label={isMuted ? "Unmute video" : "Mute video"}
-    title={isMuted ? "Unmute" : "Mute"}
-  >
-    {isMuted ? "🔇" : "🔊"}
-  </button>
+          <button
+            className="hero-audio-toggle"
+            onClick={() => {
+              const iframe = document.getElementById("showreel-iframe") as HTMLIFrameElement | null;
+              const win = iframe?.contentWindow;
+              if (!win) return;
+              win.postMessage(JSON.stringify({ event: "command", func: isMuted ? "unMute" : "mute", args: [] }), "*");
+              if (isMuted) {
+                win.postMessage(JSON.stringify({ event: "command", func: "setVolume", args: [100] }), "*");
+                win.postMessage(JSON.stringify({ event: "command", func: "playVideo", args: [] }), "*");
+              }
+              setIsMuted((m) => !m);
+            }}
+            aria-pressed={!isMuted}
+            aria-label={isMuted ? "Unmute video" : "Mute video"}
+            title={isMuted ? "Unmute" : "Mute"}
+          >
+            {isMuted ? "🔇" : "🔊"}
+          </button>
 
-  {/* scroll hint – auto hides after 4s */}
-  <div className="scroll-indicator timed-hide-4s">
-    <div className="mouse"></div>
-  </div>
+          {/* scroll hint – auto hides after 4s */}
+          <div className="scroll-indicator timed-hide-4s">
+            <div className="mouse"></div>
+          </div>
 
-  {/* rotate hint – centered & auto hides after 4s */}
-  <div className="rotate-hint timed-hide-4s" aria-hidden>
-    <div className="badge"><div className="phone-icon" /></div>
-    <span>Rotate your phone for a better view</span>
-  </div>
+          {/* rotate hint – centered & auto hides after 4s */}
+          <div className="rotate-hint timed-hide-4s" aria-hidden>
+            <div className="badge"><div className="phone-icon" /></div>
+            <span>Rotate your phone for a better view</span>
+          </div>
 
-  <style>{`
+          <style>{`
     /* ===== FIX: remove hero padding/margin on mobile portrait so the video can truly center ===== */
     @media (orientation: portrait) and (max-width: 900px) {
       .hero-section {
@@ -608,7 +608,7 @@ const App = () => {
     @media (orientation: portrait) and (max-width: 900px) { .rotate-hint { display: inline-flex; } }
     @media (orientation: landscape) { .rotate-hint { display: none !important; } }
   `}</style>
-</section>
+        </section>
 
 
 
@@ -1101,7 +1101,191 @@ const App = () => {
         .stat-card:hover { border-color: var(--accent-color); transform: translateY(-5px); }
         .stat-card h3 { font-size: 48px; font-weight: 800; color: var(--accent-color); margin-bottom: 10px; }
         .stat-card p { color: var(--text-secondary); font-size: 18px; }
+/* About Section - Mobile Responsive Updates */
+@media (max-width: 900px) {
+  .about-section {
+    padding: 60px 0;
+    min-height: auto;
+  }
+  
+  .about-content {
+    min-height: auto;
+    padding: 0 20px;
+  }
+  
+  .about-container {
+    max-width: 100%;
+  }
+  
+  .about-grid {
+    grid-template-columns: 1fr;
+    gap: 40px;
+    margin-top: 40px;
+  }
+  
+  .about-text {
+    font-size: 16px;
+    line-height: 1.7;
+    order: 1;
+  }
+  
+  .lead-text {
+    font-size: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .about-text p {
+    margin-bottom: 16px;
+  }
+  
+  .skills-list {
+    margin-top: 30px;
+    gap: 15px;
+  }
+  
+  .skill-item {
+    padding: 16px;
+  }
+  
+  .skill-icon {
+    font-size: 24px;
+  }
+  
+  .about-stats {
+    order: 2;
+    gap: 20px;
+    margin-top: 20px;
+  }
+  
+  .stat-card {
+    padding: 30px 20px;
+  }
+  
+  .stat-card h3 {
+    font-size: 36px;
+    margin-bottom: 8px;
+  }
+  
+  .stat-card p {
+    font-size: 16px;
+  }
+}
 
+@media (max-width: 480px) {
+  .about-section {
+    padding: 40px 0;
+  }
+  
+  .about-content {
+    padding: 0 16px;
+  }
+  
+  .about-grid {
+    gap: 30px;
+    margin-top: 30px;
+  }
+  
+  .lead-text {
+    font-size: 18px;
+  }
+  
+  .about-text {
+    font-size: 15px;
+  }
+  
+  .skills-list {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-top: 24px;
+  }
+  
+  .skill-item {
+    padding: 14px;
+    gap: 12px;
+  }
+  
+  .skill-icon {
+    font-size: 20px;
+  }
+  
+  .about-stats {
+    gap: 15px;
+  }
+  
+  .stat-card {
+    padding: 24px 16px;
+    border-radius: 12px;
+  }
+  
+  .stat-card h3 {
+    font-size: 32px;
+  }
+  
+  .stat-card p {
+    font-size: 14px;
+  }
+  
+  /* Ensure the section title is properly sized on mobile */
+  .about-section .section-title {
+    font-size: clamp(2rem, 6vw, 2.5rem);
+    margin-bottom: 0;
+  }
+}
+
+/* Additional touch-friendly adjustments */
+@media (hover: none) and (pointer: coarse) {
+  .skill-item:hover {
+    transform: none;
+  }
+  
+  .stat-card:hover {
+    transform: none;
+  }
+  
+  /* Add subtle tap feedback instead */
+  .skill-item:active,
+  .stat-card:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+  }
+}
+
+/* Landscape mobile optimization */
+@media (max-width: 900px) and (orientation: landscape) {
+  .about-section {
+    padding: 40px 0;
+  }
+  
+  .about-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+  }
+  
+  .about-stats {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-top: 0;
+  }
+  
+  .stat-card {
+    padding: 20px;
+  }
+  
+  .stat-card h3 {
+    font-size: 28px;
+  }
+  
+  .stat-card p {
+    font-size: 14px;
+  }
+}
+
+/* Ensure proper spacing with navbar on mobile */
+@media (max-width: 900px) {
+  .about-section {
+    scroll-margin-top: 80px;
+  }
+}
         /* Contact */
         .contact-container { width: 100%; text-align: center; }
         .contact-container .section-title { text-align: center; margin-left: auto; margin-right: auto; display: inline-block; }
