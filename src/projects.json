@@ -19,7 +19,7 @@
     { "id": 13, "title": "טמפטו 1", "secondaryTitle": "סרטון תדמית", "videoUrl": "https://youtu.be/Hn-SqiSubh8", "type": ["colorGrading","directing", "production", "videoEditing"], "format": "standard", "category": "promo" },
     { "id": 14, "title": "טמפטו 2", "secondaryTitle": "סרטון תדמית", "videoUrl": "https://youtu.be/C-c1JUwge7g", "type": ["colorGrading","directing", "production", "videoEditing"], "format": "standard", "category": "promo" },
     { "id": 15, "title": "בורות", "secondaryTitle": "קליפ", "videoUrl": "https://youtu.be/ijYpmwzrcLQ", "type": ["colorGrading","production", "directing", "videoEditing"], "format": "standard", "category": "music" },
-
+    { "id": 16, "title": "זימי גאנג", "secondaryTitle": "קליפ", "videoUrl": "https://youtu.be/u0LPF_jzmhc", "type": ["colorGrading","production", "directing", "videoEditing"], "format": "standard", "category": "music" },
     { "id": 17, "title": "קולקטיב פרק 2", "secondaryTitle": "סושיאל / ריל", "videoUrl": "https://youtube.com/shorts/bn6GCWT34KI?si=oqeRZ4gI4p2rGzNj", "type": ["videoEditing"], "format": "reel", "category": "social" },
     { "id": 18, "title": "קולקטיב פרק 3", "secondaryTitle": "סושיאל / ריל", "videoUrl": "https://youtube.com/shorts/-TPY-HoVTIU?si=PQaBpXnSXDb4Pz9a", "type": ["videoEditing"], "format": "reel", "category": "social" },
     { "id": 19, "title": "מרכז שלטון אזורי ישראל", "secondaryTitle": "סושיאל / ריל", "videoUrl": "https://youtube.com/shorts/ObevelG63G0", "type": ["videoEditing"], "format": "reel", "category": "social" },
