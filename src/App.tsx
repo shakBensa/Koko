@@ -227,6 +227,172 @@ const ReelsCarousel = ({
 
 type RoleFilter = "all" | "colorGrading" | "videoEditing" | "production" | "directing";
 
+interface MobilePaginatedProjectsProps {
+  projects: Project[];
+  openModal: (project: Project) => void;
+}
+
+const MobilePaginatedProjects: React.FC<MobilePaginatedProjectsProps> = ({ projects, openModal }) => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const projectsPerPage = 6;
+  const totalPages = Math.ceil(projects.length / projectsPerPage);
+
+  // Calculate the projects to display on current page
+  const indexOfLastProject = currentPage * projectsPerPage;
+  const indexOfFirstProject = indexOfLastProject - projectsPerPage;
+  const currentProjects = projects.slice(indexOfFirstProject, indexOfLastProject);
+
+  // Reset to page 1 when projects change (e.g., filter changes)
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [projects]);
+
+  const paginate = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+    // Scroll to top of projects section after state update
+    setTimeout(() => {
+      const projectsSection = document.querySelector('.projects-section');
+      if (projectsSection) {
+        const navbarHeight = 80;
+        const yOffset = -navbarHeight;
+        const y = projectsSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+      }
+    }, 0);
+  };
+
+  // Type-safe role mappings
+  const ROLE_LABEL: Record<string, string> = {
+    videoEditing: "Video Editing",
+    colorGrading: "Color Grading",
+    directing: "Directing",
+    production: "Production",
+  };
+
+  const ROLE_CLASS: Record<string, string> = {
+    videoEditing: "video-editing",
+    colorGrading: "color-grading",
+    directing: "directing",
+    production: "production",
+  };
+
+  // ProjectThumb component
+  const ProjectThumb: React.FC<{ title: string }> = ({ title }) => {
+    if (title === "אדון מאייר, זה אתה?") {
+      return (
+        <img
+          src="/Thumbnails/אדון מאייר, זה אתה.jpg"
+          alt={title}
+          className="project-thumbnail"
+          loading="lazy"
+          decoding="async"
+        />
+      );
+    }
+    const enc = encodeURIComponent(title);
+    const [src, setSrc] = React.useState(`/Thumbnails/${enc}.png`);
+
+    React.useEffect(() => {
+      setSrc(`/Thumbnails/${enc}.png`);
+    }, [enc]);
+
+    return (
+      <img
+        src={src}
+        alt={title}
+        className="project-thumbnail"
+        loading="lazy"
+        decoding="async"
+        onError={() => {
+          if (src.endsWith(".png")) setSrc(`/Thumbnails/${enc}.jpg`);
+        }}
+      />
+    );
+  };
+
+  return (
+    <>
+      <div className="projects-grid mobile-paginated">
+        {currentProjects.map((project, index) => (
+          <div
+            key={project.id}
+            className="project-card"
+            onClick={() => openModal(project)}
+            style={{ animationDelay: `${index * 0.1}s` }}
+          >
+            <div className="project-image">
+              {project.title && <ProjectThumb title={project.title} />}
+            </div>
+            <div className="project-content">
+              <h3 className="project-title">{project.title}</h3>
+              <p className="project-subtitle">{project.secondaryTitle}</p>
+              <div className="project-tags">
+                {(project.type ?? []).map((role) => (
+                  <span key={role} className={`tag ${ROLE_CLASS[role] ?? ""}`}>
+                    {ROLE_LABEL[role] ?? role}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {totalPages > 1 && (
+        <div className="pagination-controls">
+          <button
+            className="pagination-btn prev"
+            onClick={() => paginate(currentPage - 1)}
+            disabled={currentPage === 1}
+            aria-label="Previous page"
+          >
+            ←
+          </button>
+
+          <div className="pagination-numbers">
+            {[...Array(totalPages)].map((_, index) => {
+              const pageNumber = index + 1;
+              // Show first page, last page, current page, and pages around current
+              if (
+                pageNumber === 1 ||
+                pageNumber === totalPages ||
+                (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+              ) {
+                return (
+                  <button
+                    key={pageNumber}
+                    className={`pagination-num ${currentPage === pageNumber ? 'active' : ''}`}
+                    onClick={() => paginate(pageNumber)}
+                    aria-label={`Go to page ${pageNumber}`}
+                    aria-current={currentPage === pageNumber ? 'page' : undefined}
+                  >
+                    {pageNumber}
+                  </button>
+                );
+              } else if (
+                pageNumber === currentPage - 2 ||
+                pageNumber === currentPage + 2
+              ) {
+                return <span key={pageNumber} className="pagination-dots">...</span>;
+              }
+              return null;
+            })}
+          </div>
+
+          <button
+            className="pagination-btn next"
+            onClick={() => paginate(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            aria-label="Next page"
+          >
+            →
+          </button>
+        </div>
+      )}
+    </>
+  );
+};
+
 const App = () => {
   const [activeSection, setActiveSection] = useState("home");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -615,75 +781,53 @@ const App = () => {
 
 
 
-        {/* ===================== PROJECTS ===================== */}
-        <section ref={projectsRef} className="section projects-section">
-          <div className="section-header">
-            <AnimatedTitle>Featured Projects</AnimatedTitle>
-            <div className="filter-buttons">
-              <button
-                className={`filter-btn ${activeFilter === "all" ? "active" : ""}`}
-                onClick={() => setActiveFilter("all")}
-              >
-                All
-              </button>
-              <button
-                className={`filter-btn ${activeFilter === "colorGrading" ? "active" : ""}`}
-                onClick={() => setActiveFilter("colorGrading")}
-              >
-                Color Grading
-              </button>
-              <button
-                className={`filter-btn ${activeFilter === "videoEditing" ? "active" : ""}`}
-                onClick={() => setActiveFilter("videoEditing")}
-              >
-                Video Editing
-              </button>
-              <button
-                className={`filter-btn ${activeFilter === "production" ? "active" : ""}`}
-                onClick={() => setActiveFilter("production")}
-              >
-                Production
-              </button>
-              <button
-                className={`filter-btn ${activeFilter === "directing" ? "active" : ""}`}
-                onClick={() => setActiveFilter("directing")}
-              >
-                Directing
-              </button>
+{/* ===================== PROJECTS ===================== */}
+<section ref={projectsRef} className="section projects-section">
+  <div className="section-header">
+    <AnimatedTitle>Featured Projects</AnimatedTitle>
+    <div className="filter-buttons">
+      {/* Your existing filter buttons */}
+    </div>
+  </div>
+
+  <div className="projects-scroll-container">
+    {/* Conditionally render based on mobile/desktop */}
+    {isMobile ? (
+      <MobilePaginatedProjects 
+        projects={standardProjects} 
+        openModal={openModal} 
+      />
+    ) : (
+      <div className="projects-grid">
+        {standardProjects.map((project, index) => (
+          <div
+            key={project.id}
+            className="project-card"
+            onClick={() => openModal(project)}
+            style={{ animationDelay: `${index * 0.1}s` }}
+          >
+            <div className="project-image">
+              {project.title && (
+                <ProjectThumb title={project.title} />
+              )}
+            </div>
+            <div className="project-content">
+              <h3 className="project-title">{project.title}</h3>
+              <p className="project-subtitle">{project.secondaryTitle}</p>
+              <div className="project-tags">
+                {(project.type ?? []).map((role) => (
+                  <span key={role} className={`tag ${ROLE_CLASS[role] ?? ""}`}>
+                    {ROLE_LABEL[role] ?? role}
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
-
-          <div className="projects-scroll-container">
-            <div className="projects-grid">
-              {standardProjects.map((project, index) => (
-                <div
-                  key={project.id}
-                  className="project-card"
-                  onClick={() => openModal(project)}
-                  style={{ animationDelay: `${index * 0.1}s` }}
-                >
-                  <div className="project-image">
-                    {project.title && (
-                      <ProjectThumb title={project.title} />
-                    )}
-                  </div>
-                  <div className="project-content">
-                    <h3 className="project-title">{project.title}</h3>
-                    <p className="project-subtitle">{project.secondaryTitle}</p>
-                    <div className="project-tags">
-                      {(project.type ?? []).map((role) => (
-                        <span key={role} className={`tag ${ROLE_CLASS[role] ?? ""}`}>
-                          {ROLE_LABEL[role] ?? role}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
+        ))}
+      </div>
+    )}
+  </div>
+</section>
         {/* ===================== REELS ===================== */}
         <section className="section reels-section">
           <div className="section-header">
@@ -1388,6 +1532,141 @@ const App = () => {
           .hero-subtitle { font-size: 1.1rem; }
           .cta-button { padding: 14px 32px; font-size: 16px; }
         }
+          /* Add these pagination styles to your existing CSS */
+
+/* Pagination Styles - Mobile Only */
+@media (max-width: 900px) {
+  .projects-grid.mobile-paginated {
+    min-height: auto;
+    padding-bottom: 0;
+  }
+
+  /* Ensure consistent height for projects section */
+  .projects-section {
+    height: auto;
+    min-height: 100vh; /* Maintain minimum height */
+  }
+
+  .projects-scroll-container {
+    overflow-y: visible;
+    max-height: none;
+    min-height: 400px; /* Prevent container from collapsing */
+  }
+
+  .pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 40px;
+    padding: 20px 0 40px; /* Add bottom padding */
+  }
+
+  .pagination-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--border-color);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-primary);
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition);
+  }
+
+  .pagination-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--accent-color);
+  }
+
+  .pagination-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  .pagination-numbers {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .pagination-num {
+    min-width: 36px;
+    height: 36px;
+    padding: 0 10px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+  }
+
+  .pagination-num:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .pagination-num.active {
+    background: var(--accent-color);
+    color: white;
+    border-color: var(--accent-color);
+  }
+
+  .pagination-dots {
+    color: var(--text-secondary);
+    font-size: 14px;
+    padding: 0 4px;
+  }
+
+  /* Remove scrollbar styles on mobile paginated view */
+  .projects-section {
+    height: auto;
+    min-height: auto;
+  }
+
+  .projects-scroll-container {
+    overflow-y: visible;
+    max-height: none;
+  }
+}
+
+/* Hide pagination on desktop */
+@media (min-width: 901px) {
+  .pagination-controls {
+    display: none;
+  }
+}
+
+/* Small mobile adjustments */
+@media (max-width: 480px) {
+  .pagination-controls {
+    gap: 4px;
+    margin-top: 30px;
+  }
+
+  .pagination-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+  }
+
+  .pagination-num {
+    min-width: 32px;
+    height: 32px;
+    font-size: 14px;
+    padding: 0 8px;
+  }
+
+  .pagination-numbers {
+    gap: 2px;
+  }
+}
       `}</style>
     </>
   );
