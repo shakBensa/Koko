@@ -13,6 +13,13 @@ interface Project {
 
 // Import your actual projects data
 import projects from "./projects.json";
+import colorGallery from "./color-gallery.json";
+
+type ColorGroup = {
+  title: string;
+  cover: string;
+  images: string[];
+};
 
 // ====== Role maps (labels & CSS classes) ======
 const ROLE_LABEL: Record<string, string> = {
@@ -225,6 +232,102 @@ const ReelsCarousel = ({
   );
 };
 
+// Color Grading carousel (images)
+const ColorCarousel = ({
+  groups,
+  onOpen,
+}: {
+  groups: ColorGroup[];
+  onOpen: (g: ColorGroup) => void;
+}) => {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [snapReady, setSnapReady] = useState(false);
+  const [resetKey, setResetKey] = useState(0);
+
+  const bump = () => setResetKey((k) => k + 1);
+
+  useLayoutEffect(() => {
+    const el = trackRef.current;
+    if (!el) return;
+    setSnapReady(false);
+    requestAnimationFrame(() => {
+      el.scrollLeft = 0;
+      requestAnimationFrame(() => setSnapReady(true));
+    });
+  }, [groups.length, resetKey]);
+
+  useEffect(() => {
+    const el = trackRef.current;
+    if (!el) return;
+
+    let raf1 = 0,
+      raf2 = 0;
+
+    const hardReset = () => {
+      setSnapReady(false);
+      raf1 = requestAnimationFrame(() => {
+        el.scrollLeft = 0;
+        raf2 = requestAnimationFrame(() => {
+          el.scrollLeft = 0;
+          setSnapReady(true);
+          bump();
+        });
+      });
+    };
+
+    const io = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) hardReset();
+    }, { threshold: 0.1 });
+    io.observe(el);
+
+    const ro = new ResizeObserver(hardReset);
+    ro.observe(el);
+
+    const onLoad = () => hardReset();
+    window.addEventListener("load", onLoad);
+
+    return () => {
+      io.disconnect();
+      ro.disconnect();
+      window.removeEventListener("load", onLoad);
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+    };
+  }, []);
+
+  const scrollBy = (dir: number) => {
+    const el = trackRef.current;
+    if (!el) return;
+    const card = el.querySelector<HTMLElement>(".color-card");
+    const step = card ? card.offsetWidth + 16 : 320;
+    el.scrollBy({ left: dir * step, behavior: "smooth" });
+  };
+
+  return (
+    <div className="reels-container color-container">
+      <button className="reel-arrow left" aria-label="previous color items" onClick={() => scrollBy(-1)}>
+        ‹
+      </button>
+      <div key={resetKey} className={`reels-track ${snapReady ? "" : "no-snap"}`} ref={trackRef} dir="ltr">
+        {groups.map((g) => (
+          <div key={g.title} className="color-card" onClick={() => onOpen(g)}>
+            <div className="color-image">
+              <img src={g.cover} alt={g.title} loading="lazy" decoding="async" />
+            </div>
+            <div className="reel-meta" dir="rtl">
+              <h4>{g.title}</h4>
+              <p>{g.images.length > 1 ? `${g.images.length} תמונות` : "תמונה אחת"}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+      <button className="reel-arrow right" aria-label="next color items" onClick={() => scrollBy(1)}>
+        ›
+      </button>
+    </div>
+  );
+};
+
 type RoleFilter = "all" | "colorGrading" | "videoEditing" | "production" | "directing";
 
 interface MobilePaginatedProjectsProps {
@@ -397,6 +500,9 @@ const App = () => {
   const [activeSection, setActiveSection] = useState("home");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
+  const [isColorOpen, setIsColorOpen] = useState(false);
+  const [activeColorGroup, setActiveColorGroup] = useState<ColorGroup | null>(null);
+  const [colorIndex, setColorIndex] = useState(0);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<RoleFilter>("all");
@@ -518,19 +624,27 @@ const App = () => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         if (isModalOpen) closeModal();
+        if (isColorOpen) setIsColorOpen(false);
         if (isMenuOpen) setIsMenuOpen(false);
+      }
+      if (isColorOpen && activeColorGroup) {
+        if (e.key === "ArrowLeft") {
+          setColorIndex((i) => (i - 1 + activeColorGroup.images.length) % activeColorGroup.images.length);
+        } else if (e.key === "ArrowRight") {
+          setColorIndex((i) => (i + 1) % activeColorGroup.images.length);
+        }
       }
     };
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
-  }, [isModalOpen, isMenuOpen]);
+  }, [isModalOpen, isColorOpen, isMenuOpen, activeColorGroup]);
 
   useEffect(() => {
-    document.body.style.overflow = isModalOpen || isMenuOpen ? "hidden" : "auto";
+    document.body.style.overflow = (isModalOpen || isColorOpen || isMenuOpen) ? "hidden" : "auto";
     return () => {
       document.body.style.overflow = "auto";
     };
-  }, [isModalOpen, isMenuOpen]);
+  }, [isModalOpen, isColorOpen, isMenuOpen]);
 
   const handleFormSubmit = () => {
     const subject = encodeURIComponent("New Project Inquiry");
@@ -838,6 +952,23 @@ const App = () => {
           </div>
         </section>
 
+        {/* ===================== COLOR GRADING ===================== */}
+        <section className="section color-section">
+          <div className="section-header">
+            <AnimatedTitle>Color Grading</AnimatedTitle>
+          </div>
+          <div className="section-content">
+            <ColorCarousel
+              groups={(colorGallery as { groups: ColorGroup[] }).groups}
+              onOpen={(g) => {
+                setActiveColorGroup(g);
+                setColorIndex(0);
+                setIsColorOpen(true);
+              }}
+            />
+          </div>
+        </section>
+
         {/* ===================== ABOUT ===================== */}
         <section ref={aboutRef} className="section about-section">
           <div className="section-content about-content">
@@ -972,6 +1103,56 @@ const App = () => {
                 title={currentProject.title}
               ></iframe>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Color lightbox */}
+      {isColorOpen && activeColorGroup && (
+        <div className="modal-overlay" onClick={() => setIsColorOpen(false)}>
+          <div className="modal color-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setIsColorOpen(false)} aria-label="Close">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+            </button>
+            <h3 className="modal-title">{activeColorGroup.title}</h3>
+            <div className="photo-viewer">
+              <button
+                className="photo-nav prev"
+                onClick={() => setColorIndex((i) => (i - 1 + activeColorGroup.images.length) % activeColorGroup.images.length)}
+                aria-label="Previous image"
+              >
+                ‹
+              </button>
+              <div className="photo-stage">
+                <img
+                  src={activeColorGroup.images[colorIndex]}
+                  alt={`${activeColorGroup.title} ${colorIndex + 1}/${activeColorGroup.images.length}`}
+                />
+              </div>
+              <button
+                className="photo-nav next"
+                onClick={() => setColorIndex((i) => (i + 1) % activeColorGroup.images.length)}
+                aria-label="Next image"
+              >
+                ›
+              </button>
+            </div>
+            {activeColorGroup.images.length > 1 && (
+              <div className="photo-thumbs" dir="ltr">
+                {activeColorGroup.images.map((src, idx) => (
+                  <button
+                    key={src}
+                    className={`thumb ${idx === colorIndex ? "active" : ""}`}
+                    onClick={() => setColorIndex(idx)}
+                    aria-label={`Show image ${idx + 1}`}
+                  >
+                    <img src={src} alt={`${activeColorGroup.title} thumbnail ${idx + 1}`} />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -1498,10 +1679,35 @@ const App = () => {
         .reel-arrow.right { right: 6px; }
         .reels-track { scrollbar-gutter: stable both-edges; }
 
+        /* Color carousel */
+        .color-section { background: var(--dark-bg); width: 100vw; display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; overflow: visible; }
+        .color-section .section-content { padding-top: 0; }
+        .color-card { width: 360px; min-width: 360px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 16px; scroll-snap-align: start; cursor: pointer; transition: var(--transition); overflow: hidden; }
+        .color-card:hover { transform: translateY(-6px); border-color: rgba(255,255,255,0.2); box-shadow: var(--shadow); }
+        .color-image { position: relative; width: 100%; padding-bottom: 56.25%; background: #000; overflow: hidden; }
+        .color-image img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+
+        /* Color modal */
+        .color-modal { max-width: min(1100px, 96vw); }
+        .photo-viewer { position: relative; width: 100%; display: grid; grid-template-columns: 56px 1fr 56px; align-items: center; gap: 8px; }
+        .photo-stage { width: 100%; background: #000; border-radius: 12px; overflow: hidden; }
+        .photo-stage img { width: 100%; height: auto; display: block; max-height: 70vh; object-fit: contain; background: #000; }
+        .photo-nav { width: 48px; height: 48px; border-radius: 50%; border: 1px solid var(--border-color); background: rgba(255,255,255,0.06); color: var(--text-primary); display: grid; place-items: center; cursor: pointer; transition: var(--transition); }
+        .photo-nav:hover { background: rgba(255,255,255,0.12); }
+        .photo-nav.prev { justify-self: start; }
+        .photo-nav.next { justify-self: end; }
+        .photo-thumbs { margin-top: 12px; display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; }
+        .photo-thumbs::-webkit-scrollbar { height: 6px; }
+        .photo-thumbs::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
+        .thumb { border: 1px solid var(--border-color); background: transparent; padding: 0; border-radius: 8px; overflow: hidden; cursor: pointer; }
+        .thumb img { display: block; height: 64px; width: auto; }
+        .thumb.active { outline: 2px solid #fff; }
+
         /* Responsive */
         @media (max-width: 1024px) {
           .reels-container { padding: 0 20px; }
           .reel-card { width: 260px; min-width: 260px; }
+          .color-card { width: 300px; min-width: 300px; }
         }
         @media (max-width: 768px) {
           .mobile-menu-toggle { display: block; }
