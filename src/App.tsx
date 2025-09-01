@@ -503,6 +503,9 @@ const App = () => {
   const [isColorOpen, setIsColorOpen] = useState(false);
   const [activeColorGroup, setActiveColorGroup] = useState<ColorGroup | null>(null);
   const [colorIndex, setColorIndex] = useState(0);
+  const [rotateColorView, setRotateColorView] = useState(false);
+  const colorModalRef = useRef<HTMLDivElement>(null);
+  const photoStageRef = useRef<HTMLDivElement>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<RoleFilter>("all");
@@ -638,6 +641,26 @@ const App = () => {
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
   }, [isModalOpen, isColorOpen, isMenuOpen, activeColorGroup]);
+
+  // Fullscreen removed per request — rotate mode maximizes the view
+  // Keep rotated viewer sized precisely to the viewport via CSS vars (more reliable on mobile)
+  useEffect(() => {
+    const setVars = () => {
+      const el = colorModalRef.current;
+      if (!el) return;
+      el.style.setProperty('--rvw', `${window.innerWidth}px`);
+      el.style.setProperty('--rvh', `${window.innerHeight}px`);
+    };
+    if (isColorOpen) {
+      setVars();
+      window.addEventListener('resize', setVars);
+      window.addEventListener('orientationchange', setVars);
+    }
+    return () => {
+      window.removeEventListener('resize', setVars);
+      window.removeEventListener('orientationchange', setVars);
+    };
+  }, [isColorOpen, rotateColorView]);
 
   useEffect(() => {
     document.body.style.overflow = (isModalOpen || isColorOpen || isMenuOpen) ? "hidden" : "auto";
@@ -1125,12 +1148,20 @@ const App = () => {
       {/* Color lightbox */}
       {isColorOpen && activeColorGroup && (
         <div className="modal-overlay" onClick={() => setIsColorOpen(false)}>
-          <div className="modal color-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setIsColorOpen(false)} aria-label="Close">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
-                <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-            </button>
+          <div ref={colorModalRef} className={`modal color-modal ${rotateColorView ? 'rotate' : ''}`} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-tools" role="toolbar" aria-label="Viewer controls">
+              <button className="ctrl-btn rotate-btn" onClick={() => setRotateColorView((v) => !v)} aria-label="Rotate view">
+                <svg viewBox="0 0 24 24" aria-hidden>
+                  <path d="M21 12a9 9 0 1 1-3.3-6.9"/>
+                  <path d="M21 5v6h-6"/>
+                </svg>
+              </button>
+              <button className="ctrl-btn close-btn" onClick={() => setIsColorOpen(false)} aria-label="Close">
+                <svg viewBox="0 0 24 24" aria-hidden>
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
             <h3 className="modal-title">{activeColorGroup.title}</h3>
             <div className="photo-viewer">
               <button
@@ -1140,7 +1171,7 @@ const App = () => {
               >
                 ‹
               </button>
-              <div className="photo-stage">
+              <div ref={photoStageRef} className={`photo-stage`}>
                 <img
                   src={activeColorGroup.images[colorIndex]}
                   alt={`${activeColorGroup.title} ${colorIndex + 1}/${activeColorGroup.images.length}`}
@@ -1703,10 +1734,58 @@ const App = () => {
         .color-image img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 
         /* Color modal */
-        .color-modal { max-width: min(1100px, 96vw); }
+        .color-modal { max-width: min(1100px, 96vw); position: relative; }
+        /* Unified controls sizing */
+        .color-modal { --ctrl-size: 40px; --ctrl-icon: 18px; }
+        .modal-tools { position: absolute; top: 16px; right: 16px; display: flex; gap: 10px; z-index: 4; align-items: center; }
+        .ctrl-btn {
+          width: var(--ctrl-size); height: var(--ctrl-size);
+          border-radius: 50%;
+          border: 2px solid rgba(255,255,255,0.7);
+          background: rgba(0,0,0,0.55);
+          color: #fff;
+          display: inline-flex; align-items: center; justify-content: center;
+          cursor: pointer; transition: var(--transition);
+          box-shadow: 0 2px 10px rgba(0,0,0,0.45);
+          -webkit-tap-highlight-color: transparent;
+          line-height: 0; padding: 0; box-sizing: border-box;
+        }
+        .ctrl-btn:hover { background: rgba(0,0,0,0.7); border-color: #fff; }
+        .ctrl-btn svg {
+          width: var(--ctrl-icon); height: var(--ctrl-icon);
+          stroke: currentColor; fill: none; stroke-width: 2;
+          stroke-linecap: round; stroke-linejoin: round;
+          display: block; shape-rendering: geometricPrecision;
+        }
+        .color-modal .close-btn svg { width: var(--ctrl-icon); height: var(--ctrl-icon); }
         .photo-viewer { position: relative; width: 100%; display: grid; grid-template-columns: 56px 1fr 56px; align-items: center; gap: 8px; }
-        .photo-stage { width: 100%; background: #000; border-radius: 12px; overflow: hidden; }
-        .photo-stage img { width: 100%; height: auto; display: block; max-height: 70vh; object-fit: contain; background: #000; }
+        .photo-stage { width: 100%; background: #000; border-radius: 12px; overflow: hidden; display: grid; place-items: center; }
+        .photo-stage img { width: 100%; height: auto; display: block; max-height: 70vh; object-fit: contain; background: #000; transition: transform .25s ease; }
+        
+        /* Rotate entire viewer to leverage full viewport */
+        .color-modal.rotate { position: fixed; inset: 0; width: 100vw; height: 100vh; max-width: 100vw; max-height: 100vh; background: rgba(0,0,0,0.97); padding: 0; border-radius: 0; }
+        .color-modal.rotate .modal-title, .color-modal.rotate .photo-thumbs { display: none; }
+        .color-modal.rotate .photo-viewer { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(90deg); width: var(--rvh, 100svh); height: var(--rvw, 100svw); transform-origin: center; display: block; }
+        /* Place rotate at visual top-right and close at bottom-right when rotated */
+        .color-modal.rotate .modal-tools { position: static; }
+        .color-modal.rotate .rotate-btn {
+          position: fixed;
+          top: 12px;
+          right: 12px;
+          z-index: 3001;
+        }
+        .color-modal.rotate .close-btn {
+          position: fixed;
+          bottom: 12px;
+          right: 12px;
+          z-index: 3001;
+        }
+        .color-modal.rotate .photo-viewer { z-index: 1; }
+        /* Ensure toolbar container itself doesn't rotate or reposition in rotate mode */
+        .color-modal.rotate .modal-tools { position: static; transform: none !important; top: auto; right: auto; left: auto; }
+        .color-modal.rotate .photo-stage { position: absolute; inset: 0; }
+        .color-modal.rotate .photo-stage img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; transform: none; }
+        .color-modal.rotate .photo-nav { background: rgba(0,0,0,0.6); }
         .photo-nav { width: 48px; height: 48px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.28); background: rgba(0,0,0,0.6); color: #fff; display: grid; place-items: center; cursor: pointer; transition: var(--transition); box-shadow: 0 4px 18px rgba(0,0,0,0.35); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
         .photo-nav:hover { background: rgba(0,0,0,0.75); border-color: rgba(255,255,255,0.4); }
         .photo-nav.prev { justify-self: start; }
@@ -1717,6 +1796,29 @@ const App = () => {
         .thumb { border: 1px solid var(--border-color); background: transparent; padding: 0; border-radius: 8px; overflow: hidden; cursor: pointer; }
         .thumb img { display: block; height: 64px; width: auto; }
         .thumb.active { outline: 2px solid #fff; }
+
+        /* Mobile-optimized photo viewer */
+        @media (max-width: 900px) {
+          .color-modal { width: 100vw; max-width: 100vw; padding: 12px; background: transparent; box-shadow: none; }
+          .color-modal .modal-title { font-size: 20px; margin-bottom: 10px; text-align: center; }
+          .color-modal { --ctrl-size: 36px; --ctrl-icon: 16px; }
+          .modal-tools { left: calc(+var(--ctrl-size)); top: 14px; }
+          .color-modal .modal-close { top: 14px; right: 14px; }
+          .photo-viewer { grid-template-columns: 1fr; position: relative; }
+          .photo-stage { background: #000; border-radius: 10px; }
+          .photo-stage img { max-height: 82vh; width: 100%; height: auto; object-fit: contain; }
+          .photo-nav { position: absolute; top: 50%; transform: translateY(-50%); z-index: 2; background: rgba(0,0,0,0.6); }
+          .photo-nav.prev { left: 8px; }
+          .photo-nav.next { right: 8px; }
+          .photo-thumbs { margin-top: 10px; }
+          .thumb img { height: 52px; }
+
+          /* Mobile rotate view: keep full-viewport rotated viewer */
+          .color-modal.rotate { padding: 0; }
+          .color-modal.rotate .photo-viewer { width: var(--rvh, 100svh); height: var(--rvw, 100svw); }
+          .color-modal.rotate .photo-stage { position: absolute; inset: 0; }
+          .color-modal.rotate .photo-stage img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+        }
 
         /* Responsive */
         @media (max-width: 1024px) {
@@ -1752,6 +1854,18 @@ const App = () => {
           .project-content { padding: 20px; }
           .hero-subtitle { font-size: 1.1rem; }
           .cta-button { padding: 14px 32px; font-size: 16px; }
+        }
+        /* Desktop: pin individual buttons so close is flush-right, rotate to its left */
+        @media (min-width: 901px) {
+          .color-modal:not(.rotate) .modal-tools { position: static; }
+          .color-modal:not(.rotate) .close-btn { position: fixed; top: 24px; right: 24px; z-index: 3001; }
+          .color-modal:not(.rotate) .rotate-btn { position: fixed; top: 24px; right: calc(24px + var(--ctrl-size) + 10px); z-index: 3001; }
+        }
+        /* Mobile toolbar sizing and rotated placement */
+        @media (max-width: 900px) {
+          .color-modal { --ctrl-size: 36px; --ctrl-icon: 16px; }
+          .color-modal.rotate .rotate-btn { top: 10px; right: 10px; }
+          .color-modal.rotate .close-btn { bottom: 10px; right: 10px; }
         }
           /* Add these pagination styles to your existing CSS */
 
