@@ -900,7 +900,22 @@ const App = () => {
   <div className="section-header">
     <AnimatedTitle>Featured Projects</AnimatedTitle>
     <div className="filter-buttons">
-      {/* Your existing filter buttons */}
+      {([
+        { key: "all", label: "All" },
+        { key: "colorGrading", label: "Color Grading" },
+        { key: "videoEditing", label: "Video Editing" },
+        { key: "production", label: "Production" },
+        { key: "directing", label: "Directing" },
+      ] as { key: RoleFilter; label: string }[]).map((f) => (
+        <button
+          key={f.key}
+          className={`filter-btn ${activeFilter === f.key ? "active" : ""}`}
+          onClick={() => setActiveFilter(f.key)}
+          aria-pressed={activeFilter === f.key}
+        >
+          {f.label}
+        </button>
+      ))}
     </div>
   </div>
 
