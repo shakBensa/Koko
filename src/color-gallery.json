@@ -1,0 +1,63 @@
+{
+  "groups": [
+    {
+      "title": "אגו",
+      "cover": "/Color/אגו.jpg",
+      "images": [
+        "/Color/אגו.jpg"
+      ]
+    },
+    {
+      "title": "אדון מאייר",
+      "cover": "/Color/אדון מאייר - א.jpg",
+      "images": [
+        "/Color/אדון מאייר - א.jpg",
+        "/Color/אדון מאייר- ב.jpg",
+        "/Color/אדון מאייר- ג.jpg",
+        "/Color/אדון מאייר- ה.jpg",
+        "/Color/אדון מאייר- ו.jpg",
+        "/Color/אדון מאייר- ז.jpg"
+      ]
+    },
+    {
+      "title": "דרך אבודה",
+      "cover": "/Color/דרך אבודה- א.jpg",
+      "images": [
+        "/Color/דרך אבודה- א.jpg",
+        "/Color/דרך אבודה- ב.jpg",
+        "/Color/דרך אבודה- ג.jpg",
+        "/Color/דרך אבודה- ד.jpg",
+        "/Color/דרך אבודה- ה.jpg",
+        "/Color/דרך אבודה- ו.jpg",
+        "/Color/דרך אבודה- ז.jpg"
+      ]
+    },
+    {
+      "title": "כסף בריא",
+      "cover": "/Color/כסף בריא.jpg",
+      "images": [
+        "/Color/כסף בריא.jpg"
+      ]
+    },
+    {
+      "title": "על גופתי",
+      "cover": "/Color/על גופתי- א.jpg",
+      "images": [
+        "/Color/על גופתי- א.jpg",
+        "/Color/על גופתי- ב.jpg",
+        "/Color/על גופתי- ג.jpg",
+        "/Color/על גופתי- ד.jpg",
+        "/Color/על גופתי- ה.jpg"
+      ]
+    },
+    {
+      "title": "שיניים",
+      "cover": "/Color/שיניים - א.jpg",
+      "images": [
+        "/Color/שיניים - א.jpg",
+        "/Color/שיניים- ב.jpg"
+      ]
+    }
+  ]
+}
+
