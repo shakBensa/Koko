@@ -61,17 +61,41 @@ const AnimatedTitle = ({ children }: { children: string }) => {
   }, [isVisible]);
 
   if (isMobile) {
-    // Break each word to a new line
-    return (
-      <h2 ref={titleRef} className={`section-title ${isVisible ? "animate" : ""}`}>
-        {children.split(" ").map((word, wIdx) => (
-          <span key={wIdx} style={{ display: "block" }}>
-            {word.split("").map((letter, lIdx) => (
-              <span key={lIdx} style={{ animationDelay: `${(wIdx * 10 + lIdx) * 0.03}s` }}>
-                {letter}
-              </span>
+    // Mobile: animate letters but keep real, breakable spaces between words
+    // Special-case: keep "Together" on its own line for this exact heading
+    const normalized = children.replace(/\s+/g, " ").trim();
+    if (normalized.toLowerCase() === "let's work together") {
+      const first = "Let's Work";
+      const second = "Together";
+      return (
+        <h2 ref={titleRef} className={`section-title ${isVisible ? "animate" : ""}`}>
+          {first.split("").map((ch, idx) => (
+            ch === ' '
+              ? <React.Fragment key={`lw-sp-${idx}`}>{'\u00A0'}</React.Fragment>
+              : <span key={`lw-${idx}`} style={{ animationDelay: `${idx * 0.03}s` }}>{ch}</span>
+          ))}
+          <br />
+          <span style={{ whiteSpace: "nowrap" }}>
+            {second.split("").map((ch, idx) => (
+              <span key={`tg-${idx}`} style={{ animationDelay: `${(first.length + idx) * 0.03}s` }}>{ch}</span>
             ))}
           </span>
+        </h2>
+      );
+    }
+
+    const words = children.split(" ");
+    return (
+      <h2 ref={titleRef} className={`section-title ${isVisible ? "animate" : ""}`}>
+        {words.map((word, wIdx) => (
+          <React.Fragment key={`w-${wIdx}`}>
+            {word.split("").map((ch, lIdx) => (
+              <span key={`l-${wIdx}-${lIdx}`} style={{ animationDelay: `${(wIdx * 10 + lIdx) * 0.03}s` }}>
+                {ch}
+              </span>
+            ))}
+            {wIdx < words.length - 1 ? " " : null}
+          </React.Fragment>
         ))}
       </h2>
     );
