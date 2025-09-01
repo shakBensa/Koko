@@ -1688,8 +1688,8 @@ const App = () => {
         .reel-meta { padding: 12px 14px 16px; }
         .reel-meta h4 { font-size: 16px; margin-bottom: 6px; }
         .reel-meta p { color: var(--text-secondary); font-size: 14px; }
-        .reel-arrow { position: absolute; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--border-color); background: rgba(255,255,255,0.04); color: var(--text-primary); display: grid; place-items: center; cursor: pointer; transition: var(--transition); z-index: 2; }
-        .reel-arrow:hover { background: rgba(255,255,255,0.1); }
+        .reel-arrow { position: absolute; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.28); background: rgba(0,0,0,0.6); color: #fff; display: grid; place-items: center; cursor: pointer; transition: var(--transition); z-index: 5; box-shadow: 0 4px 18px rgba(0,0,0,0.35); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+        .reel-arrow:hover { background: rgba(0,0,0,0.75); border-color: rgba(255,255,255,0.4); }
         .reel-arrow.left { left: 6px; }
         .reel-arrow.right { right: 6px; }
         .reels-track { scrollbar-gutter: stable both-edges; }
@@ -1707,8 +1707,8 @@ const App = () => {
         .photo-viewer { position: relative; width: 100%; display: grid; grid-template-columns: 56px 1fr 56px; align-items: center; gap: 8px; }
         .photo-stage { width: 100%; background: #000; border-radius: 12px; overflow: hidden; }
         .photo-stage img { width: 100%; height: auto; display: block; max-height: 70vh; object-fit: contain; background: #000; }
-        .photo-nav { width: 48px; height: 48px; border-radius: 50%; border: 1px solid var(--border-color); background: rgba(255,255,255,0.06); color: var(--text-primary); display: grid; place-items: center; cursor: pointer; transition: var(--transition); }
-        .photo-nav:hover { background: rgba(255,255,255,0.12); }
+        .photo-nav { width: 48px; height: 48px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.28); background: rgba(0,0,0,0.6); color: #fff; display: grid; place-items: center; cursor: pointer; transition: var(--transition); box-shadow: 0 4px 18px rgba(0,0,0,0.35); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+        .photo-nav:hover { background: rgba(0,0,0,0.75); border-color: rgba(255,255,255,0.4); }
         .photo-nav.prev { justify-self: start; }
         .photo-nav.next { justify-self: end; }
         .photo-thumbs { margin-top: 12px; display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; }
@@ -1787,20 +1787,23 @@ const App = () => {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    border: 1px solid var(--border-color);
-    background: rgba(255, 255, 255, 0.03);
-    color: var(--text-primary);
+    border: 1px solid rgba(0,0,0,0.25);
+    background: rgba(0,0,0,0.6);
+    color: #fff;
     font-size: 18px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: var(--transition);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
   }
 
   .pagination-btn:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: var(--accent-color);
+    background: rgba(0,0,0,0.75);
+    border-color: rgba(255,255,255,0.35);
   }
 
   .pagination-btn:disabled {
