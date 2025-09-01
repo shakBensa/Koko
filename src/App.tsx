@@ -1786,6 +1786,10 @@ const App = () => {
         .color-modal.rotate .photo-stage { position: absolute; inset: 0; }
         .color-modal.rotate .photo-stage img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; transform: none; }
         .color-modal.rotate .photo-nav { background: rgba(0,0,0,0.6); }
+        /* Rotated mode: arrows at far left/right, vertically centered */
+        .color-modal.rotate .photo-nav { position: fixed; top: 50%; transform: translateY(-50%); z-index: 3000; }
+        .color-modal.rotate .photo-nav.prev { left: 12px; right: auto; }
+        .color-modal.rotate .photo-nav.next { right: 12px; left: auto; }
         .photo-nav { width: 48px; height: 48px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.28); background: rgba(0,0,0,0.6); color: #fff; display: grid; place-items: center; cursor: pointer; transition: var(--transition); box-shadow: 0 4px 18px rgba(0,0,0,0.35); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
         .photo-nav:hover { background: rgba(0,0,0,0.75); border-color: rgba(255,255,255,0.4); }
         .photo-nav.prev { justify-self: start; }
@@ -1818,6 +1822,10 @@ const App = () => {
           .color-modal.rotate .photo-viewer { width: var(--rvh, 100svh); height: var(--rvw, 100svw); }
           .color-modal.rotate .photo-stage { position: absolute; inset: 0; }
           .color-modal.rotate .photo-stage img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+          /* Override for rotated on mobile: fixed arrows left/right at 10px */
+          .color-modal.rotate .photo-nav { position: fixed; top: 50%; transform: translateY(-50%); z-index: 3000; }
+          .color-modal.rotate .photo-nav.prev { left: 10px; right: auto; }
+          .color-modal.rotate .photo-nav.next { right: 10px; left: auto; }
         }
 
         /* Responsive */
